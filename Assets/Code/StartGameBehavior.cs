@@ -1,5 +1,5 @@
-using System;
 using Code.Contracts;
+using Code.Controllers;
 using Code.Infrastructure;
 
 namespace Code
@@ -15,7 +15,7 @@ namespace Code
 
         public void Start()
         {
-            throw new NotImplementedException();
+            _diContainer.Resolve<IFactory<PlayerController>>().Create();
         }
     }
 }
