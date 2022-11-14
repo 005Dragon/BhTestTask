@@ -1,4 +1,4 @@
-namespace Code
+namespace Code.Contracts
 {
     public interface IStartGameService
     {

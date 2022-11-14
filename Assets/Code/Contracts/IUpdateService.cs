@@ -1,4 +1,6 @@
-namespace Code
+using Code.Infrastructure;
+
+namespace Code.Contracts
 {
     public interface IUpdateService
     {

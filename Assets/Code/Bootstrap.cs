@@ -1,3 +1,5 @@
+using Code.Contracts;
+using Code.Infrastructure;
 using UnityEngine;
 
 namespace Code
@@ -10,6 +12,7 @@ namespace Code
 
             diContainer.Register<IStartGameService>(new StartGameService(diContainer));
             diContainer.Register<IUpdateService>(gameObject.AddComponent<UpdateGameBehaviour>());
+            diContainer.Register<IUserInputService>(new UserInput());
         }
     }
 }

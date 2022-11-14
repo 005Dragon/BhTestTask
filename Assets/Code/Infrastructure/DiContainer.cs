@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Code
+namespace Code.Infrastructure
 {
     public class DiContainer
     {
