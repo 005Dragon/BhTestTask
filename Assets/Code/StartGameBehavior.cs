@@ -1,8 +1,19 @@
-using UnityEngine;
+using System;
 
 namespace Code
 {
-    public class StartGameBehaviour : MonoBehaviour
+    public class StartGameService : IStartGameService
     {
+        private readonly DiContainer _diContainer;
+
+        public StartGameService(DiContainer diContainer)
+        {
+            _diContainer = diContainer;
+        }
+
+        public void Start()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
