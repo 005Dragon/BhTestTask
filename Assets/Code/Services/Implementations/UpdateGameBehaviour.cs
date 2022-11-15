@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Code.Contracts;
 using Code.Infrastructure;
+using Code.Services.Contracts;
 using UnityEngine;
 
-namespace Code
+namespace Code.Services.Implementations
 {
     public class UpdateGameBehaviour : MonoBehaviour, IUpdateService
     {

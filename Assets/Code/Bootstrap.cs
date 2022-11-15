@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using Code.Contracts;
 using Code.Controllers;
 using Code.Factories;
 using Code.Infrastructure;
+using Code.Services.Contracts;
+using Code.Services.Implementations;
 using UnityEngine;
 
 namespace Code
@@ -19,8 +20,10 @@ namespace Code
 
             _diContainer.Register<IStartGameService>(new StartGameService(_diContainer));
             _diContainer.Register<IUpdateService>(gameObject.AddComponent<UpdateGameBehaviour>());
-            _diContainer.Register<IUserInputService>(new UserInput());
+            _diContainer.Register<IUserInputService>(new UserInputService());
             _diContainer.Register<IViewService>(new ViewService(_viewTemplates.ToArray()));
+            
+            _diContainer.Register<IFactory<NetworkManagerController>>(new NetworkManagerFactory(_diContainer));
             _diContainer.Register<IFactory<PlayerController>>(new PlayerFactory(_diContainer));
         }
 

@@ -1,8 +1,8 @@
-using Code.Contracts;
 using Code.Controllers;
 using Code.Infrastructure;
+using Code.Services.Contracts;
 
-namespace Code
+namespace Code.Services.Implementations
 {
     public class StartGameService : IStartGameService
     {
@@ -15,7 +15,10 @@ namespace Code
 
         public void Start()
         {
-            _diContainer.Resolve<IFactory<PlayerController>>().Create();
+            NetworkManagerController networkManagerController =
+                _diContainer.Resolve<IFactory<NetworkManagerController>>().Create();
+            
+            
         }
     }
 }

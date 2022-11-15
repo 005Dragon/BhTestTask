@@ -1,7 +1,7 @@
-using Code.Contracts;
 using Code.Controllers;
 using Code.Infrastructure;
 using Code.Models;
+using Code.Services.Contracts;
 using Code.Views;
 
 namespace Code.Factories

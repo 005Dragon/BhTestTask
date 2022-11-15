@@ -1,6 +1,8 @@
+using System;
 using System.Linq;
-using Code.Contracts;
+using Code.Services.Contracts;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Code.Factories
 {
@@ -13,14 +15,36 @@ namespace Code.Factories
             _viewTemplates = viewTemplates;
         }
 
+        public TInstance FindTemplate<TInstance>() 
+            where TInstance : MonoBehaviour
+        {
+            TInstance result = null;
+            
+            foreach (GameObject gameObject in _viewTemplates)
+            {
+                if (gameObject.TryGetComponent(out TInstance instance))
+                {
+                    if (result != null)
+                    {
+                        throw new InvalidOperationException("Found more than one element of type.");
+                    }
+                    
+                    result = instance;
+                }
+            }
+
+            if (result == null)
+            {
+                throw new InvalidOperationException("Not found element of type.");
+            }
+
+            return result;
+        }
+
         public TInstance Create<TInstance>()
             where TInstance : MonoBehaviour
         {
-            GameObject viewTemplate = _viewTemplates.Single(x => x.TryGetComponent(out TInstance _));
-            
-            GameObject gameObject = Object.Instantiate(viewTemplate);
-
-            return gameObject.GetComponent<TInstance>();
+            return Object.Instantiate(FindTemplate<TInstance>());
         }
     }
 }

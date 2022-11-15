@@ -7,12 +7,15 @@ namespace Code.Controllers
 {
     public class PlayerController : IUpdatable
     {
+        public PlayerView View { get; }
+        
         private readonly PlayerModel _model;
         private readonly Transform _cachedViewTransform;
 
         public PlayerController(PlayerModel model, PlayerView view)
         {
             _model = model;
+            View = view;
             _cachedViewTransform = view.transform;
             
             UpdateModelFromView();

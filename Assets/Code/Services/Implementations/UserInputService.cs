@@ -1,11 +1,11 @@
 using System;
-using Code.Contracts;
 using Code.Infrastructure;
+using Code.Services.Contracts;
 using UnityEngine;
 
-namespace Code
+namespace Code.Services.Implementations
 {
-    public class UserInput : IUserInputService, IUpdatable
+    public class UserInputService : IUserInputService, IUpdatable
     {
         public event EventHandler MainAction;
         public Vector2 RotateImpulseInput { get; private set; }

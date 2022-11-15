@@ -1,4 +1,4 @@
-namespace Code.Contracts
+namespace Code.Services.Contracts
 {
     public interface IFactory<out TInstance>
     {

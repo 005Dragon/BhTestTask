@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Code.Contracts
+namespace Code.Services.Contracts
 {
     public interface IUserInputService
     {
