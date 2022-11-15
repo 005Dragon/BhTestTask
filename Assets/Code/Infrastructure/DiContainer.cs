@@ -5,12 +5,13 @@ namespace Code.Infrastructure
 {
     public class DiContainer
     {
-        private readonly DiContainer _parent;
+        public static DiContainer Instance => _instance ??= new DiContainer();
+        private static DiContainer _instance;
+        
         private readonly Dictionary<Type, object> _typeToInstanceIndex = new();
 
-        public DiContainer(DiContainer parent = null)
+        private DiContainer()
         {
-            _parent = parent;
         }
 
         public void Register<T>(T instance)
@@ -32,11 +33,6 @@ namespace Code.Infrastructure
             if (_typeToInstanceIndex.TryGetValue(instanceType, out object instance))
             {
                 return (T) instance;
-            }
-
-            if (_parent != null)
-            {
-                return _parent.Resolve<T>();
             }
 
             throw new InvalidOperationException($"Dependency of {instanceType} not found.");

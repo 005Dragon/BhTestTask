@@ -10,7 +10,19 @@ namespace Code.Services.Implementations
         public event EventHandler MainAction;
         public Vector2 RotateImpulseInput { get; private set; }
         public Vector2 MoveInput { get; private set; }
-        
+
+        public UserInputService()
+        {
+            DiContainer.Instance.Resolve<IUpdateService>().AddToUpdate(this);
+        }
+
+        public void ChangeCursorLockState()
+        {
+            Cursor.lockState = Cursor.lockState == CursorLockMode.Locked
+                ? CursorLockMode.Confined
+                : CursorLockMode.Locked;
+        }
+
         public void Update()
         {
             if (Input.GetKey(0))
@@ -18,8 +30,17 @@ namespace Code.Services.Implementations
                 MainAction?.Invoke(this, EventArgs.Empty);
             }
 
-            RotateImpulseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                RotateImpulseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")).normalized;
+            }
+            
             MoveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+
+            if (Input.GetKey(KeyCode.Escape))
+            {
+                ChangeCursorLockState();
+            }
         }
     }
 }

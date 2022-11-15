@@ -8,5 +8,7 @@ namespace Code.Services.Contracts
         event EventHandler MainAction;
         Vector2 RotateImpulseInput { get; }
         Vector2 MoveInput { get; }
+
+        void ChangeCursorLockState();
     }
 }

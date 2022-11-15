@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
-using Code.Controllers;
-using Code.Factories;
 using Code.Infrastructure;
+using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Code.Services.Implementations;
+using Code.Views;
+using Mirror;
 using UnityEngine;
 
 namespace Code
@@ -12,24 +14,25 @@ namespace Code
     {
         [SerializeField] private List<GameObject> _viewTemplates;
         
-        private DiContainer _diContainer;
-
         private void Awake()
         {
-            _diContainer = new DiContainer();
-
-            _diContainer.Register<IStartGameService>(new StartGameService(_diContainer));
-            _diContainer.Register<IUpdateService>(gameObject.AddComponent<UpdateGameBehaviour>());
-            _diContainer.Register<IUserInputService>(new UserInputService());
-            _diContainer.Register<IViewService>(new ViewService(_viewTemplates.ToArray()));
-            
-            _diContainer.Register<IFactory<NetworkManagerController>>(new NetworkManagerFactory(_diContainer));
-            _diContainer.Register<IFactory<PlayerController>>(new PlayerFactory(_diContainer));
+            DiContainer.Instance.Register<IUpdateService>(gameObject.AddComponent<UpdateGameBehaviour>());
+            DiContainer.Instance.Register<IUserInputService>(new UserInputService());
+            DiContainer.Instance.Register<IViewService>(new ViewService(_viewTemplates.ToArray()));
         }
 
         private void Start()
         {
-            _diContainer.Resolve<IStartGameService>().Start();
+            var networkManagerView = DiContainer.Instance.Resolve<IViewService>().Create<NetworkManagerView>();
+            
+            networkManagerView.playerPrefab =
+                DiContainer.Instance.Resolve<IViewService>().FindTemplate<PlayerView>().gameObject;
+            networkManagerView.ClientConnected += NetworkManagerViewOnClientConnected;
+        }
+
+        private void NetworkManagerViewOnClientConnected(object sender, EventArgs eventArgs)
+        {
+            NetworkClient.Send(new CreatePlayerMessage());
         }
     }
 }

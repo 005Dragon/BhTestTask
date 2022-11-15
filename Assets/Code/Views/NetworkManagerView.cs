@@ -1,12 +1,13 @@
 using System;
+using Code.Infrastructure;
 using Code.NetworkMessages;
+using Code.Services.Contracts;
 using Mirror;
 
 namespace Code.Views
 {
     public class NetworkManagerView : NetworkManager
     {
-        public event EventHandler<NetworkMessageEventArgs<CreatePlayerMessage>> CreatingPlayer;
         public event EventHandler ClientConnected;
 
         public override void OnStartServer()
@@ -22,10 +23,11 @@ namespace Code.Views
             
             ClientConnected?.Invoke(this, EventArgs.Empty);
         }
-
+        
         private void CreatePlayerHandler(NetworkConnectionToClient networkConnection, CreatePlayerMessage message)
         {
-            CreatingPlayer?.Invoke(this, new NetworkMessageEventArgs<CreatePlayerMessage>(networkConnection, message));
+            var playerView = DiContainer.Instance.Resolve<IViewService>().Create<PlayerView>();
+            NetworkServer.AddPlayerForConnection(networkConnection, playerView.gameObject);
         }
     }
 }

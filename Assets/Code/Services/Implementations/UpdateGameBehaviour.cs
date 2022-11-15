@@ -7,7 +7,7 @@ namespace Code.Services.Implementations
 {
     public class UpdateGameBehaviour : MonoBehaviour, IUpdateService
     {
-        public bool Updating { get; set; }
+        public bool Updating { get; set; } = true;
 
         private readonly List<IUpdatable> _updatableObjects = new();
 
@@ -21,7 +21,7 @@ namespace Code.Services.Implementations
             _updatableObjects.Remove(updatableObject);
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (!Updating)
             {

@@ -1,10 +1,9 @@
 using System;
-using System.Linq;
 using Code.Services.Contracts;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Code.Factories
+namespace Code.Services.Implementations
 {
     public class ViewService : IViewService
     {
