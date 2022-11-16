@@ -1,4 +1,5 @@
 using System;
+using Code.Infrastructure;
 using Code.Services.Contracts;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -40,10 +41,17 @@ namespace Code.Services.Implementations
             return result;
         }
 
-        public TInstance Create<TInstance>()
+        public TInstance Create<TInstance>(bool registerInDiContainer)
             where TInstance : MonoBehaviour
         {
-            return Object.Instantiate(FindTemplate<TInstance>());
+            TInstance instance = Object.Instantiate(FindTemplate<TInstance>());
+
+            if (registerInDiContainer)
+            {
+                DiContainer.Instance.Register(instance);
+            }
+
+            return instance;
         }
     }
 }

@@ -1,3 +1,4 @@
+using Code.Controllers.Implementations;
 using Code.Infrastructure;
 using Code.Services.Contracts;
 using Mirror;
@@ -8,52 +9,114 @@ namespace Code.Views
     public class PlayerView : NetworkBehaviour
     {
         [SerializeField] private float _moveSpeed;
-        [SerializeField] private float _rotationSpeed;
+        [SerializeField] private float _moveAcceleration;
+        [SerializeField] private float _rotationAcceleration;
         
-        private IUserInputService _userInputService;
-        private CameraView _cameraView;
-        private Transform _cachedTransform;
-
-        private void Start()
+        public override void OnStartClient()
         {
+            base.OnStartClient();
+
             if (isOwned)
             {
-                _cachedTransform = transform;
+                Transform cachedTransform = transform;
                 
-                _cameraView = DiContainer.Instance.Resolve<IViewService>().Create<CameraView>();
-                _cameraView.Target = transform;
-
-                _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
-                _userInputService.ChangeCursorLockState();
+                InitializeCamera(cachedTransform);
+                CreateControllers(cachedTransform);
             }
         }
 
-        private void FixedUpdate()
+        private void InitializeCamera(Transform cachedTransform)
         {
-            if (isOwned)
+            var cameraView = DiContainer.Instance.Resolve<CameraView>();
+            cameraView.Target = cachedTransform;
+        }
+
+        private void CreateControllers(Transform cachedTransform)
+        {
+            var updateService = DiContainer.Instance.Resolve<IUpdateService>();
+            
+            FollowToRotationController followToRotationController = 
+                CreateFollowToRotationController(cachedTransform, updateService);
+
+            CreatePlayerRotateController(followToRotationController, updateService);
+
+            FollowToPositionController followToPositionController =
+                CreateFollowToPositionController(cachedTransform, _moveAcceleration);
+
+            CreatePlayerMoveController(
+                cachedTransform,
+                _moveSpeed,
+                _rotationAcceleration,
+                followToPositionController,
+                followToRotationController,
+                updateService
+            );
+        }
+
+        private static FollowToRotationController CreateFollowToRotationController(
+            Transform cachedTransform,
+            IUpdateService updateService)
+        {
+            var followToRotationController = new FollowToRotationController(cachedTransform);
+
+            followToRotationController.CalculatedRotationChanged +=
+                (_, rotation) => cachedTransform.rotation = rotation;
+            
+            updateService.AddToUpdate(followToRotationController);
+
+            return followToRotationController;
+        }
+
+        private static void CreatePlayerRotateController(
+            FollowToRotationController followToRotationController,
+            IUpdateService updateService)
+        {
+            var playerRotateController = new PlayerRotateController()
             {
-                _cameraView.RotateAroundTarget(_userInputService.RotateImpulseInput * Time.deltaTime);
-                
-                Vector3 moveImpulse =
-                    _cachedTransform.forward * _userInputService.MoveInput.y * Time.deltaTime * _moveSpeed +
-                    _cachedTransform.right * _userInputService.MoveInput.x * Time.deltaTime * _moveSpeed;
+                IsActive = true
+            };
 
-                _cachedTransform.position += moveImpulse;
+            playerRotateController.CalculatedRotationChanged +=
+                (_, rotation) => followToRotationController.TargetRotation = rotation;
+            
+            updateService.AddToUpdate(playerRotateController);
+        }
 
-                float moveImpulseMagnitude = moveImpulse.magnitude;
-                
-                if (moveImpulseMagnitude > 0.01f)
-                {
-                    Quaternion targetRotation =
-                        Quaternion.AngleAxis(_cameraView.transform.rotation.eulerAngles.y, Vector3.up);
+        private static FollowToPositionController CreateFollowToPositionController(
+            Transform cachedTransform,
+            float acceleration)
+        {
+            FollowToPositionController followToPositionController = DiContainer.Instance
+                .Resolve<IFollowToPositionControllerFactory>()
+                .Create(cachedTransform, acceleration);
 
-                    _cachedTransform.rotation = Quaternion.Lerp(
-                        _cachedTransform.rotation,
-                        targetRotation,
-                        _rotationSpeed * moveImpulseMagnitude * Time.deltaTime
-                    );
-                }
-            }
+            followToPositionController.CalculatedPositionChanged +=
+                (_, position) => cachedTransform.position = position;
+            
+            return followToPositionController;
+        }
+
+        private static void CreatePlayerMoveController(
+            Transform cachedTransform,
+            float speed,
+            float rotationAcceleration,
+            FollowToPositionController followToPositionController,
+            FollowToRotationController followToRotationController,
+            IUpdateService updateService)
+        {
+            var playerMoveController = new PlayerMoveController(cachedTransform)
+            {
+                IsActive = true,
+                Speed = speed
+            };
+
+            playerMoveController.CalculatedPositionChanged +=
+                (_, position) => followToPositionController.TargetPosition = position;
+
+            playerMoveController.MoveImpulseMagnitudeChanged += (_, moveImpulseMagnitude) =>
+                followToRotationController.Acceleration = rotationAcceleration * moveImpulseMagnitude;
+            
+            updateService.AddToUpdate(playerMoveController);
         }
     }
 }

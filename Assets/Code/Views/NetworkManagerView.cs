@@ -21,13 +21,21 @@ namespace Code.Views
         {
             base.OnClientConnect();
             
+            InitializePlayer();
+        }
+
+        private void InitializePlayer()
+        {
+            DiContainer.Instance.Resolve<IViewService>().Create<CameraView>();
+            DiContainer.Instance.Resolve<IUserInputService>().ChangeCursorLockState();
+            
             ClientConnected?.Invoke(this, EventArgs.Empty);
         }
         
-        private void CreatePlayerHandler(NetworkConnectionToClient networkConnection, CreatePlayerMessage message)
+        private void CreatePlayerHandler(NetworkConnectionToClient connection, CreatePlayerMessage message)
         {
-            var playerView = DiContainer.Instance.Resolve<IViewService>().Create<PlayerView>();
-            NetworkServer.AddPlayerForConnection(networkConnection, playerView.gameObject);
+            var playerView = DiContainer.Instance.Resolve<IViewService>().Create<PlayerView>(false);
+            NetworkServer.AddPlayerForConnection(connection, playerView.gameObject);
         }
     }
 }

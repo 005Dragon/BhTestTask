@@ -50,8 +50,9 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0.1
-  _moveSpeed: 10
-  _rotationSpeed: 100
+  _moveSpeed: 100
+  _moveAcceleration: 10
+  _rotationAcceleration: 10
 --- !u!114 &6855872360379193160
 MonoBehaviour:
   m_ObjectHideFlags: 0

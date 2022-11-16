@@ -1,3 +1,6 @@
+using Code.Controllers.Implementations;
+using Code.Infrastructure;
+using Code.Services.Contracts;
 using UnityEngine;
 
 namespace Code.Views
@@ -5,55 +8,112 @@ namespace Code.Views
     [RequireComponent(typeof(Camera))]
     public class CameraView : MonoBehaviour
     {
-        [SerializeField] private float _moveSpeed;
         [SerializeField] private float _upShift;
+        [SerializeField] private float _acceleration;
         [SerializeField] private float _distanceToTarget;
+        [SerializeField] private float _verticalAngleAnchor;
         [SerializeField] private float _verticalAngleRestrictions;
         [SerializeField] private float _sensitivity;
-        
-        public Transform Target { get; set; }
 
-        private Transform _cachedTransform;
-        private float _horizontalAngle;
-        private float _verticalAngle;
-
-        public void RotateAroundTarget(Vector2 siftAngleVector)
+        public Transform Target
         {
-            _horizontalAngle -= siftAngleVector.x * _sensitivity;
-            _verticalAngle = Mathf.Clamp(
-                _verticalAngle + siftAngleVector.y * _sensitivity,
-                Mathf.PI / 2 - _verticalAngleRestrictions,
-                Mathf.PI / 2 + _verticalAngleRestrictions
-            );
+            get => _shiftTargetController.OriginTransform;
+            set => _shiftTargetController.OriginTransform = value;
         }
+
+        private ShiftTargetController _shiftTargetController;
 
         private void Awake()
         {
-            _cachedTransform = transform;
+            CreateControllers(transform);
         }
 
-        private void FixedUpdate()
+        private void CreateControllers(Transform cachedTransform)
         {
-            if (Target != null)
-            {
-                _cachedTransform.position = 
-                    Vector3.Lerp(_cachedTransform.position, GetCameraPosition(), Time.deltaTime * _moveSpeed);
-                
-                _cachedTransform.LookAt(GetTargetPosition());
-            }
+            var updateService = DiContainer.Instance.Resolve<IUpdateService>();
+
+            LookToTargetController lookToTargetController =
+                CreateLookToTargetController(cachedTransform, updateService);
+
+            FollowToPositionController followToPositionController =
+                CreateFollowToPositionController(cachedTransform, _acceleration);
+
+            RotateAroundTargetController rotateAroundTargetController =
+                CreateRotateAroundTargetController(followToPositionController, updateService);
+
+            _shiftTargetController = 
+                CreateShitTargetController(lookToTargetController, rotateAroundTargetController, updateService);
         }
         
-        private Vector3 GetCameraPosition()
+        private static LookToTargetController CreateLookToTargetController(
+            Transform cachedTransform,
+            IUpdateService updateService)
         {
-            float sinVerticalAngle = Mathf.Sin(_verticalAngle);
+            var lookToTargetController = new LookToTargetController(cachedTransform);
 
-            return GetTargetPosition() + new Vector3(
-                _distanceToTarget * sinVerticalAngle * Mathf.Cos(_horizontalAngle),
-                _distanceToTarget * Mathf.Cos(_verticalAngle),
-                _distanceToTarget * sinVerticalAngle * Mathf.Sin(_horizontalAngle)
-            );
+            lookToTargetController.CalculatedRotationChanged += (_, rotation) => cachedTransform.rotation = rotation;
+            
+            updateService.AddToUpdate(lookToTargetController);
+
+            return lookToTargetController;
         }
 
-        private Vector3 GetTargetPosition() => Target.position + new Vector3(0, _upShift);
+        private ShiftTargetController CreateShitTargetController(
+            LookToTargetController lookToTargetController,
+            RotateAroundTargetController rotateAroundTargetController,
+            IUpdateService updateService)
+        {
+            var shiftTargetController = new ShiftTargetController
+            {
+                ShiftPosition = new Vector3(0, _upShift)
+            };
+
+            shiftTargetController.CalculatedPositionChanged += (_, position) =>
+            {
+                lookToTargetController.TargetPosition = position;
+                rotateAroundTargetController.TargetPosition = position;
+            };
+            
+            updateService.AddToUpdate(shiftTargetController);
+
+            return shiftTargetController;
+        }
+
+        private RotateAroundTargetController CreateRotateAroundTargetController(
+            FollowToPositionController followToPositionController,
+            IUpdateService updateService)
+        {
+            float verticalAngleAnchor = _verticalAngleAnchor * Mathf.Deg2Rad;
+
+            var rotateAroundTargetController = new RotateAroundTargetController(verticalAngleAnchor)
+            {
+                DistanceToTarget = _distanceToTarget,
+                Sensitivity = _sensitivity,
+                VerticalAngleRestrictions = _verticalAngleRestrictions * Mathf.Deg2Rad,
+                VerticalAngleAnchor = verticalAngleAnchor
+            };
+
+            rotateAroundTargetController.CalculatedPositionChanged += (_, position) =>
+                followToPositionController.TargetPosition = position;
+            
+            updateService.AddToUpdate(rotateAroundTargetController);
+
+            return rotateAroundTargetController;
+        }
+
+        private static FollowToPositionController CreateFollowToPositionController(
+            Transform cachedTransform,
+            float acceleration)
+        {
+            FollowToPositionController followToPositionController = 
+                DiContainer.Instance
+                    .Resolve<IFollowToPositionControllerFactory>()
+                    .Create(cachedTransform, acceleration);
+
+            followToPositionController.CalculatedPositionChanged +=
+                (_, position) => cachedTransform.position = position;
+
+            return followToPositionController;
+        }
     }
 }

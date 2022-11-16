@@ -7,7 +7,7 @@ namespace Code.Services.Contracts
         TInstance FindTemplate<TInstance>()
             where TInstance : MonoBehaviour;
         
-        TInstance Create<TInstance>()
+        TInstance Create<TInstance>(bool registerInDiContainer = true)
             where TInstance : MonoBehaviour;
     }
 }

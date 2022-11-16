@@ -23,7 +23,7 @@ namespace Code.Services.Implementations
                 : CursorLockMode.Locked;
         }
 
-        public void Update()
+        public void Update(float deltaTime)
         {
             if (Input.GetKey(0))
             {
@@ -32,10 +32,10 @@ namespace Code.Services.Implementations
 
             if (Cursor.lockState == CursorLockMode.Locked)
             {
-                RotateImpulseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")).normalized;
+                RotateImpulseInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
             }
             
-            MoveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+            MoveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")).normalized;
 
             if (Input.GetKey(KeyCode.Escape))
             {

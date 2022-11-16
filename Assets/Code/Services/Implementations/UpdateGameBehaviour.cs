@@ -30,9 +30,11 @@ namespace Code.Services.Implementations
             
             IUpdatable[] cachedUpdatableObjects = _updatableObjects.ToArray();
 
+            float deltaTime = Time.deltaTime;
+
             foreach (IUpdatable updatable in cachedUpdatableObjects)
             {
-                updatable.Update();
+                updatable.Update(deltaTime);
             }
         }
     }
