@@ -25,7 +25,7 @@ namespace Code.Services.Implementations
 
         public void Update(float deltaTime)
         {
-            if (Input.GetKey(0))
+            if (Input.GetMouseButton(0))
             {
                 MainAction?.Invoke(this, EventArgs.Empty);
             }

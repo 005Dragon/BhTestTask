@@ -8,9 +8,15 @@ namespace Code.Views
 {
     public class PlayerView : NetworkBehaviour
     {
+        [Header("Simple movement")]
         [SerializeField] private float _moveSpeed;
         [SerializeField] private float _moveAcceleration;
         [SerializeField] private float _rotationAcceleration;
+        
+        [Header("Spurt movement")]
+        [SerializeField] private float _spurtDistance;
+        [SerializeField] private float _spurtSpeed;
+        [SerializeField] private float _spurtCooldown;
         
         public override void OnStartClient()
         {
@@ -38,19 +44,60 @@ namespace Code.Views
             FollowToRotationController followToRotationController = 
                 CreateFollowToRotationController(cachedTransform, updateService);
 
-            CreatePlayerRotateController(followToRotationController, updateService);
+            PlayerRotateController playerRotateController =
+                CreatePlayerRotateController(followToRotationController, updateService);
 
             FollowToPositionController followToPositionController =
                 CreateFollowToPositionController(cachedTransform, _moveAcceleration);
 
-            CreatePlayerMoveController(
+            PlayerMoveController playerMoveController = CreatePlayerMoveController(
                 cachedTransform,
-                _moveSpeed,
-                _rotationAcceleration,
                 followToPositionController,
                 followToRotationController,
                 updateService
             );
+
+            var userInputService = DiContainer.Instance.Resolve<IUserInputService>();
+
+            CreatePlayerSpurtController(
+                cachedTransform,
+                followToPositionController,
+                playerRotateController,
+                playerMoveController,
+                updateService,
+                userInputService
+            );
+        }
+
+        private void CreatePlayerSpurtController(
+            Transform cachedTransform,
+            FollowToPositionController followToPositionController,
+            PlayerRotateController playerRotateController,
+            PlayerMoveController playerMoveController,
+            IUpdateService updateService,
+            IUserInputService userInputService)
+        {
+            var playerSpurtController = new PlayerSpurtController(cachedTransform)
+            {
+                Distance = _spurtDistance,
+                Speed = _spurtSpeed,
+                Cooldown = _spurtCooldown
+            };
+
+            playerSpurtController.ActiveChanged += (_, active) =>
+            {
+                playerMoveController.IsActive = !active;
+                playerRotateController.IsActive = !active;
+            };
+
+            playerSpurtController.CalculatedPositionChanged += (_, position) =>
+            {
+                cachedTransform.position = position;
+                followToPositionController.TargetPosition = position;
+            };
+            
+            updateService.AddToUpdate(playerSpurtController);
+            userInputService.MainAction += (_, _) => playerSpurtController.Active();
         }
 
         private static FollowToRotationController CreateFollowToRotationController(
@@ -67,7 +114,7 @@ namespace Code.Views
             return followToRotationController;
         }
 
-        private static void CreatePlayerRotateController(
+        private static PlayerRotateController CreatePlayerRotateController(
             FollowToRotationController followToRotationController,
             IUpdateService updateService)
         {
@@ -80,6 +127,8 @@ namespace Code.Views
                 (_, rotation) => followToRotationController.TargetRotation = rotation;
             
             updateService.AddToUpdate(playerRotateController);
+
+            return playerRotateController;
         }
 
         private static FollowToPositionController CreateFollowToPositionController(
@@ -96,10 +145,8 @@ namespace Code.Views
             return followToPositionController;
         }
 
-        private static void CreatePlayerMoveController(
+        private PlayerMoveController CreatePlayerMoveController(
             Transform cachedTransform,
-            float speed,
-            float rotationAcceleration,
             FollowToPositionController followToPositionController,
             FollowToRotationController followToRotationController,
             IUpdateService updateService)
@@ -107,16 +154,18 @@ namespace Code.Views
             var playerMoveController = new PlayerMoveController(cachedTransform)
             {
                 IsActive = true,
-                Speed = speed
+                Speed = _moveSpeed
             };
 
             playerMoveController.CalculatedPositionChanged +=
                 (_, position) => followToPositionController.TargetPosition = position;
 
             playerMoveController.MoveImpulseMagnitudeChanged += (_, moveImpulseMagnitude) =>
-                followToRotationController.Acceleration = rotationAcceleration * moveImpulseMagnitude;
+                followToRotationController.Acceleration = _rotationAcceleration * moveImpulseMagnitude;
             
             updateService.AddToUpdate(playerMoveController);
+
+            return playerMoveController;
         }
     }
 }
