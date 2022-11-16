@@ -52,6 +52,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0.1
+  _bodyMeshRenderer: {fileID: 6400702960129980629}
   _moveSpeed: 20
   _moveAcceleration: 20
   _rotationAcceleration: 50

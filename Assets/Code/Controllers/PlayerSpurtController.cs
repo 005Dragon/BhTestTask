@@ -8,6 +8,7 @@ namespace Code.Controllers
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
         public event EventHandler<bool> ActiveChanged;
+        public event EventHandler<bool> ReadyChanged;
         
         public float Distance { get; set; }
         public float Speed { get; set; }
@@ -24,6 +25,7 @@ namespace Code.Controllers
 
         private readonly Transform _playerTransform;
 
+        private bool _isReady;
         private bool _isActive;
         private float _cooldown;
         private float _currentCooldown;
@@ -38,7 +40,7 @@ namespace Code.Controllers
 
         public void Active()
         {
-            if (_isActive || _currentCooldown > 0)
+            if (_isActive || !_isReady)
             {
                 return;
             }
@@ -71,7 +73,10 @@ namespace Code.Controllers
             }
             else
             {
-                UpdateCooldown(deltaTime);
+                if (!_isReady)
+                {
+                    UpdateCooldown(deltaTime);
+                }
             }
         }
 
@@ -88,8 +93,22 @@ namespace Code.Controllers
                 _progress = 1.0f;
             }
         }
-        private void UpdateCooldown(float deltaTime) => _currentCooldown -= deltaTime;
-        private void ResetCooldown() => _currentCooldown = Cooldown;
+        private void UpdateCooldown(float deltaTime) 
+        {
+            _currentCooldown -= deltaTime;
+
+            if (_currentCooldown <= 0.0f)
+            {
+                _isReady = true;
+                ReadyChanged?.Invoke(this, _isReady);
+            }
+        }
+        private void ResetCooldown()
+        {
+            _isReady = false;
+            ReadyChanged?.Invoke(this, _isReady);
+            _currentCooldown = Cooldown;
+        }
         private Vector3 GetTargetPosition() => _startPosition + _playerTransform.forward * Distance;
     }
 }

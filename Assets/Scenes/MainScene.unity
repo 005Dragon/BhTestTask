@@ -246,6 +246,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63448ac923de4dd3ad5e8b71c912bcb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _storages:
+  - {fileID: 11400000, guid: 33c4e5503022403479dcb81334ece557, type: 2}
   _viewTemplates:
   - {fileID: 632833585994801835, guid: b242a52d1a3f76a45aaf0a4f40786099, type: 3}
   - {fileID: 8031367754409535519, guid: c393b4a53ba212243ad7d1322ee85ea6, type: 3}
