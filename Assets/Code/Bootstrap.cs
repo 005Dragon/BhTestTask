@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
-using Code.Controllers.Factories;
+using Code.Controllers;
+using Code.Factories;
 using Code.Infrastructure;
-using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Code.Services.Implementations;
-using Code.Views;
-using Mirror;
 using UnityEngine;
 
 namespace Code
@@ -14,6 +11,8 @@ namespace Code
     public class Bootstrap : MonoBehaviour
     {
         [SerializeField] private List<GameObject> _viewTemplates;
+
+        private GameStartController _gameStartController;
         
         private void Awake()
         {
@@ -23,26 +22,12 @@ namespace Code
             
             DiContainer.Instance.Register<IFollowToPositionControllerFactory>(new FollowToPositionControllerFactory());
             DiContainer.Instance.Register<IFollowToRotationControllerFactory>(new FollowToRotationControllerFactory());
+            DiContainer.Instance.Register<IHurdleViewFactory>(new HurdleViewFactory());
+            DiContainer.Instance.Register<IMapViewFactory>(new MapViewFactory());
+
+            _gameStartController = new GameStartController();
         }
 
-        private void Start()
-        {
-            CreateNetworkManager();
-        }
-
-        private void CreateNetworkManager()
-        {
-            var networkManagerView = DiContainer.Instance.Resolve<IViewService>().Create<NetworkManagerView>();
-            
-            networkManagerView.playerPrefab =
-                DiContainer.Instance.Resolve<IViewService>().FindTemplate<PlayerView>().gameObject;
-            
-            networkManagerView.ClientConnected += NetworkManagerViewOnClientConnected;
-        }
-
-        private void NetworkManagerViewOnClientConnected(object sender, EventArgs eventArgs)
-        {
-            NetworkClient.Send(new CreatePlayerMessage());
-        }
+        private void Start() => _gameStartController.Start();
     }
 }

@@ -1,4 +1,4 @@
-using Code.Controllers.Implementations;
+using Code.Controllers;
 using UnityEngine;
 
 namespace Code.Services.Contracts

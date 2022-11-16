@@ -3,7 +3,7 @@ using Code.Infrastructure;
 using Code.Services.Contracts;
 using UnityEngine;
 
-namespace Code.Controllers.Implementations
+namespace Code.Controllers
 {
     public class RotateAroundTargetController : IUpdatable
     {

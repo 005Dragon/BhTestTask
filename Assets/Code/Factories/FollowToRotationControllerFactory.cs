@@ -1,9 +1,9 @@
-using Code.Controllers.Implementations;
+using Code.Controllers;
 using Code.Infrastructure;
 using Code.Services.Contracts;
 using UnityEngine;
 
-namespace Code.Controllers.Factories
+namespace Code.Factories
 {
     public class FollowToRotationControllerFactory : IFollowToRotationControllerFactory
     {

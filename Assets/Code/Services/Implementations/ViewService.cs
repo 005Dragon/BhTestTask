@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Code.Infrastructure;
 using Code.Services.Contracts;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace Code.Services.Implementations
 {
@@ -15,7 +17,7 @@ namespace Code.Services.Implementations
             _viewTemplates = viewTemplates;
         }
 
-        public TInstance FindTemplate<TInstance>() 
+        public TInstance FindSingleTemplate<TInstance>() 
             where TInstance : MonoBehaviour
         {
             TInstance result = null;
@@ -40,11 +42,23 @@ namespace Code.Services.Implementations
 
             return result;
         }
+        
+        public IEnumerable<TInstance> FindTemplates<TInstance>() 
+            where TInstance : MonoBehaviour
+        {
+            foreach (GameObject viewTemplate in _viewTemplates)
+            {
+                if (viewTemplate.TryGetComponent(out TInstance instance))
+                {
+                    yield return instance;
+                }
+            }
+        }
 
         public TInstance Create<TInstance>(bool registerInDiContainer)
             where TInstance : MonoBehaviour
         {
-            TInstance instance = Object.Instantiate(FindTemplate<TInstance>());
+            TInstance instance = Object.Instantiate(FindSingleTemplate<TInstance>());
 
             if (registerInDiContainer)
             {
@@ -52,6 +66,24 @@ namespace Code.Services.Implementations
             }
 
             return instance;
+        }
+
+        public TInstance CreateRandomAnyOfType<TInstance>() 
+            where TInstance : MonoBehaviour
+        {
+            List<TInstance> templates = new();
+
+            foreach (GameObject viewTemplate in _viewTemplates)
+            {
+                if (viewTemplate.TryGetComponent(out TInstance instance))
+                {
+                    templates.Add(instance);
+                }
+            }
+
+            int templateIndex = Random.Range(0, templates.Count);
+            
+            return Object.Instantiate(templates[templateIndex]);
         }
     }
 }

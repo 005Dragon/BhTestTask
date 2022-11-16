@@ -10,13 +10,28 @@ namespace Code.Views
     {
         public event EventHandler ClientConnected;
 
+        private IViewService _viewService;
+        private IUserInputService _userInputService;
+        private IMapViewFactory _mapViewFactory;
+
+        public override void Awake()
+        {
+            base.Awake();
+
+            _viewService = DiContainer.Instance.Resolve<IViewService>();
+            _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
+            _mapViewFactory = DiContainer.Instance.Resolve<IMapViewFactory>();
+        }
+
         public override void OnStartServer()
         {
             base.OnStartServer();
+
+            _mapViewFactory.Create();
             
             NetworkServer.RegisterHandler<CreatePlayerMessage>(CreatePlayerHandler);
         }
-
+        
         public override void OnClientConnect()
         {
             base.OnClientConnect();
@@ -26,15 +41,15 @@ namespace Code.Views
 
         private void InitializePlayer()
         {
-            DiContainer.Instance.Resolve<IViewService>().Create<CameraView>();
-            DiContainer.Instance.Resolve<IUserInputService>().ChangeCursorLockState();
+            _viewService.Create<CameraView>();
+            _userInputService.ChangeCursorLockState();
             
             ClientConnected?.Invoke(this, EventArgs.Empty);
         }
-        
+
         private void CreatePlayerHandler(NetworkConnectionToClient connection, CreatePlayerMessage message)
         {
-            var playerView = DiContainer.Instance.Resolve<IViewService>().Create<PlayerView>(false);
+            var playerView = _viewService.Create<PlayerView>(false);
             NetworkServer.AddPlayerForConnection(connection, playerView.gameObject);
         }
     }

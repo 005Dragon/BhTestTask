@@ -2,7 +2,7 @@ using System;
 using Code.Infrastructure;
 using UnityEngine;
 
-namespace Code.Controllers.Implementations
+namespace Code.Controllers
 {
     public class PlayerSpurtController : IUpdatable
     {

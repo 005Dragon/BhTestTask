@@ -1,11 +1,13 @@
-using Code.Controllers.Implementations;
+using Code.Controllers;
 using Code.Infrastructure;
+using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Mirror;
 using UnityEngine;
 
 namespace Code.Views
 {
+    [RequireComponent(typeof(Rigidbody))]
     public class PlayerView : NetworkBehaviour
     {
         [Header("Simple movement")]
@@ -17,17 +19,17 @@ namespace Code.Views
         [SerializeField] private float _spurtDistance;
         [SerializeField] private float _spurtSpeed;
         [SerializeField] private float _spurtCooldown;
-        
+
         public override void OnStartClient()
         {
             base.OnStartClient();
-
+            
             if (isOwned)
             {
                 Transform cachedTransform = transform;
-                
+
                 InitializeCamera(cachedTransform);
-                CreateControllers(cachedTransform);
+                CreateControllers(cachedTransform, GetComponent<Rigidbody>());
             }
         }
 
@@ -37,7 +39,7 @@ namespace Code.Views
             cameraView.Target = cachedTransform;
         }
 
-        private void CreateControllers(Transform cachedTransform)
+        private void CreateControllers(Transform cachedTransform, Rigidbody cachedRigidbody)
         {
             var updateService = DiContainer.Instance.Resolve<IUpdateService>();
             
@@ -48,7 +50,7 @@ namespace Code.Views
                 CreatePlayerRotateController(followToRotationController, updateService);
 
             FollowToPositionController followToPositionController =
-                CreateFollowToPositionController(cachedTransform, _moveAcceleration);
+                CreateFollowToPositionController(cachedTransform, cachedRigidbody, _moveAcceleration);
 
             PlayerMoveController playerMoveController = CreatePlayerMoveController(
                 cachedTransform,
@@ -133,6 +135,7 @@ namespace Code.Views
 
         private static FollowToPositionController CreateFollowToPositionController(
             Transform cachedTransform,
+            Rigidbody rigidbody,
             float acceleration)
         {
             FollowToPositionController followToPositionController = DiContainer.Instance
@@ -140,7 +143,7 @@ namespace Code.Views
                 .Create(cachedTransform, acceleration);
 
             followToPositionController.CalculatedPositionChanged +=
-                (_, position) => cachedTransform.position = position;
+                (_, position) => rigidbody.MovePosition(position);
             
             return followToPositionController;
         }

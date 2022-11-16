@@ -3,7 +3,7 @@ using Code.Infrastructure;
 using Code.Views;
 using UnityEngine;
 
-namespace Code.Controllers.Implementations
+namespace Code.Controllers
 {
     public class PlayerRotateController : IUpdatable
     {
