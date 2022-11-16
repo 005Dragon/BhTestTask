@@ -11,11 +11,21 @@ namespace Code.Controllers
         
         public float Distance { get; set; }
         public float Speed { get; set; }
-        public float Cooldown { get; set; }
+
+        public float Cooldown
+        {
+            get => _cooldown;
+            set
+            {
+                _cooldown = value;
+                _currentCooldown = _cooldown;
+            }
+        }
 
         private readonly Transform _playerTransform;
 
         private bool _isActive;
+        private float _cooldown;
         private float _currentCooldown;
         private float _progress;
         private Vector3 _startPosition;

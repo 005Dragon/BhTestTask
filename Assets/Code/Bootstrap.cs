@@ -23,6 +23,7 @@ namespace Code
             DiContainer.Instance.Register<IFollowToPositionControllerFactory>(new FollowToPositionControllerFactory());
             DiContainer.Instance.Register<IFollowToRotationControllerFactory>(new FollowToRotationControllerFactory());
             DiContainer.Instance.Register<IHurdleViewFactory>(new HurdleViewFactory());
+            DiContainer.Instance.Register<ISpawnPointViewFactory>(new SpawnPointViewFactory());
             DiContainer.Instance.Register<IMapViewFactory>(new MapViewFactory());
 
             _gameStartController = new GameStartController();

@@ -49,7 +49,10 @@ namespace Code.Views
 
         private void CreatePlayerHandler(NetworkConnectionToClient connection, CreatePlayerMessage message)
         {
+            SpawnPointView spawnPoint = DiContainer.Instance.Resolve<MapView>().GetRandomSpawnPoint();
             var playerView = _viewService.Create<PlayerView>(false);
+            playerView.transform.position = spawnPoint.transform.position;
+            
             NetworkServer.AddPlayerForConnection(connection, playerView.gameObject);
         }
     }

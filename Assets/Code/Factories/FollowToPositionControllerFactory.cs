@@ -18,6 +18,7 @@ namespace Code.Factories
         {
             var followToPositionController = new FollowToPositionController(cachedTransform)
             {
+                TargetPosition = cachedTransform.position,
                 Acceleration = acceleration
             };
             
