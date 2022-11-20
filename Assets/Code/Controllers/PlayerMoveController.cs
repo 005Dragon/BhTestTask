@@ -19,7 +19,7 @@ namespace Code.Controllers
         public PlayerMoveController(Transform playerTransform)
         {
             _playerTransform = playerTransform;
-            _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
+            _userInputService = DiContainerRoot.Instance.Resolve<IUserInputService>();
         }
 
         public void Update(float deltaTime)

@@ -18,9 +18,9 @@ namespace Code.Views
         {
             base.Awake();
 
-            _viewService = DiContainer.Instance.Resolve<IViewService>();
-            _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
-            _mapViewFactory = DiContainer.Instance.Resolve<IMapViewFactory>();
+            _viewService = DiContainerRoot.Instance.Resolve<IViewService>();
+            _userInputService = DiContainerRoot.Instance.Resolve<IUserInputService>();
+            _mapViewFactory = DiContainerRoot.Instance.Resolve<IMapViewFactory>();
         }
 
         public override void OnStartServer()
@@ -49,7 +49,7 @@ namespace Code.Views
 
         private void CreatePlayerHandler(NetworkConnectionToClient connection, CreatePlayerMessage message)
         {
-            SpawnPointView spawnPoint = DiContainer.Instance.Resolve<MapView>().GetRandomSpawnPoint();
+            SpawnPointView spawnPoint = DiContainerRoot.Instance.Resolve<MapView>().GetRandomSpawnPoint();
             var playerView = _viewService.Create<PlayerView>(false);
             playerView.transform.position = spawnPoint.transform.position;
             

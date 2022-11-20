@@ -9,8 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 675a81c27c804e14848e2d1ff648b4ad, type: 3}
-  m_Name: DefaultPlayerMaterialData 1
+  m_Script: {fileID: 11500000, guid: 39774dbeea3447a2a26774666a164c27, type: 3}
+  m_Name: CameraData
   m_EditorClassIdentifier: 
-  _materialKey: 0
-  _material: {fileID: 2100000, guid: e4cd23ac785ed754c901eaab9543d55a, type: 2}
+  _upShift: 4
+  _acceleration: 5
+  _distanceToTarget: 10
+  _verticalAngleAnchor: 90
+  _verticalAngleRestrictions: 20
+  _sensitivity: 6

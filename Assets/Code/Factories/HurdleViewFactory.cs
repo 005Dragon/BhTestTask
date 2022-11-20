@@ -12,7 +12,7 @@ namespace Code.Factories
 
         public HurdleViewFactory()
         {
-            _viewService = DiContainer.Instance.Resolve<IViewService>();
+            _viewService = DiContainerRoot.Instance.Resolve<IViewService>();
         }
 
         public HurdleView Create(float spawnRadius)

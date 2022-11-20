@@ -62,7 +62,7 @@ namespace Code.Services.Implementations
 
             if (registerInDiContainer)
             {
-                DiContainer.Instance.Register(instance);
+                DiContainerRoot.Instance.Register(instance);
             }
 
             return instance;

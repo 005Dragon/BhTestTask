@@ -1,3 +1,4 @@
+using System;
 using Code.Controllers;
 using Code.Data;
 using Code.Infrastructure;
@@ -5,6 +6,7 @@ using Code.Services.Contracts;
 using Mirror;
 using UnityEngine;
 
+// ReSharper disable UnusedParameter.Local
 namespace Code.Views
 {
     [RequireComponent(typeof(Rigidbody))]
@@ -12,126 +14,103 @@ namespace Code.Views
     {
         [Header("Inner references")] 
         [SerializeField] private MeshRenderer _bodyMeshRenderer;
-        
-        [Header("Simple movement")]
-        [SerializeField] private float _moveSpeed;
-        [SerializeField] private float _moveAcceleration;
-        [SerializeField] private float _rotationAcceleration;
-        
-        [Header("Spurt movement")]
-        [SerializeField] private float _spurtDistance;
-        [SerializeField] private float _spurtSpeed;
-        [SerializeField] private float _spurtCooldown;
 
-        [SyncVar(hook = nameof(SyncBodyMaterial))] 
-        // ReSharper disable once NotAccessedField.Local
-        private MaterialKey _currentBodyMaterialKey;
+        [Header("Data")] 
+        [SerializeField] private PlayerData _playerData;
 
-        private IUpdateService _updateService;
-        private IUserInputService _userInputService;
-        private IMaterialService _materialService;
+        [field: SyncVar(hook = nameof(UpdateBodyMaterial))]
+        public PlayerState State { get; private set; }
+
+        private DiContainer _diContainer;
 
         private void Awake()
         {
-            _updateService = DiContainer.Instance.Resolve<IUpdateService>();
-            _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
-            _materialService = DiContainer.Instance.Resolve<IMaterialService>();
+            _diContainer = new DiContainer(DiContainerRoot.Instance);
+            _diContainer.Register(transform);
+            _diContainer.Register(GetComponent<Rigidbody>());
+            _diContainer.Register(_playerData);
         }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
-            
+
             if (!isOwned)
             {
                 return;
             }
             
-            Transform cachedTransform = transform;
-
-            InitializeCamera(cachedTransform);
-            CreateControllers(cachedTransform, GetComponent<Rigidbody>());
+            CreateControllers(_diContainer);
+            InitializeCamera(_diContainer);
+            InitializeApplyingDataFromControllers(_diContainer);
         }
 
-        private void InitializeCamera(Transform cachedTransform)
+        private void OnCollisionEnter(Collision collision)
         {
-            var cameraView = DiContainer.Instance.Resolve<CameraView>();
-            cameraView.Target = cachedTransform;
+            if (isOwned)
+            {
+                _diContainer.Resolve<PlayerSpurtCollisionController>().CheckCollision(State, collision);
+            }
         }
 
-        private void CreateControllers(Transform cachedTransform, Rigidbody cachedRigidbody)
+        private static void InitializeCamera(DiContainer diContainer)
         {
-            FollowToRotationController followToRotationController = 
-                CreateFollowToRotationController(cachedTransform);
-
-            PlayerRotateController playerRotateController =
-                CreatePlayerRotateController(followToRotationController);
-
-            FollowToPositionController followToPositionController =
-                CreateFollowToPositionController(cachedTransform, cachedRigidbody, _moveAcceleration);
-
-            PlayerMoveController playerMoveController = CreatePlayerMoveController(
-                cachedTransform,
-                followToPositionController,
-                followToRotationController
-            );
-
-            CreatePlayerSpurtController(
-                cachedTransform,
-                followToPositionController,
-                playerRotateController,
-                playerMoveController
-            );
+            var cameraView = diContainer.Resolve<CameraView>();
+            cameraView.Target = diContainer.Resolve<Transform>();
         }
 
-        private void CreatePlayerSpurtController(
-            Transform cachedTransform,
-            FollowToPositionController followToPositionController,
-            PlayerRotateController playerRotateController,
-            PlayerMoveController playerMoveController)
+        private static void InitializeApplyingDataFromControllers(DiContainer diContainer)
         {
-            var playerSpurtController = new PlayerSpurtController(cachedTransform)
-            {
-                Distance = _spurtDistance,
-                Speed = _spurtSpeed,
-                Cooldown = _spurtCooldown
-            };
+            var transform = diContainer.Resolve<Transform>();
 
-            playerSpurtController.ReadyChanged += (_, isReady) =>
-            {
-                CmdChangeBodyMaterial(isReady ? MaterialKey.ActivePlayer : MaterialKey.DefaultPlayer);
-            };
-
-            playerSpurtController.ActiveChanged += (_, isActive) =>
-            {
-                playerMoveController.IsActive = !isActive;
-                playerRotateController.IsActive = !isActive;
-            };
-
-            playerSpurtController.CalculatedPositionChanged += (_, position) =>
-            {
-                cachedTransform.position = position;
-                followToPositionController.TargetPosition = position;
-            };
+            diContainer.Resolve<FollowToRotationController>().CalculatedRotationChanged  += 
+                (_, rotation) => transform.rotation = rotation;
             
-            _updateService.AddToUpdate(playerSpurtController);
-            _userInputService.MainAction += (_, _) => playerSpurtController.Active();
-        }
+            var rigidbody = diContainer.Resolve<Rigidbody>();
 
-        private FollowToRotationController CreateFollowToRotationController(Transform cachedTransform)
-        {
-            var followToRotationController = new FollowToRotationController(cachedTransform);
-
-            followToRotationController.CalculatedRotationChanged +=
-                (_, rotation) => cachedTransform.rotation = rotation;
+            diContainer.Resolve<FollowToPositionController>().CalculatedPositionChanged +=
+                (_, position) => rigidbody.MovePosition(position);
             
-            _updateService.AddToUpdate(followToRotationController);
-
-            return followToRotationController;
+            diContainer.Resolve<IUserInputService>().MainAction +=
+                (_, _) => diContainer.Resolve<PlayerStateController>().TryChangeStateToActiveSpurt();
         }
 
-        private PlayerRotateController CreatePlayerRotateController(
-            FollowToRotationController followToRotationController)
+        private void CreateControllers(DiContainer diContainer)
+        {
+            CreatePlayerSpurtCollisionController(diContainer);
+            CreateFollowToRotationController(diContainer);
+            CreatePlayerRotateController(diContainer);
+            CreateFollowToPositionController(diContainer);
+            CreatePlayerMoveController(diContainer);
+            CreatePlayerSpurtController(diContainer);
+            CreatePlayerStateController(diContainer);
+        }
+
+        private static void CreatePlayerSpurtCollisionController(DiContainer diContainer)
+        {
+            var playerSpurtCollisionController = new PlayerSpurtCollisionController();
+
+            playerSpurtCollisionController.Damaged +=
+                (_, _) => diContainer.Resolve<PlayerStateController>().TryChangeStateToDisable();
+
+            playerSpurtCollisionController.Intersected += 
+                (_, _) => diContainer.Resolve<PlayerSpurtController>().Stop();
+            
+            diContainer.Register(playerSpurtCollisionController);
+        }
+
+        private static void CreateFollowToRotationController(DiContainer diContainer)
+        {
+            var transform = diContainer.Resolve<Transform>();
+            
+            var followToRotationController = new FollowToRotationController(transform);
+
+            diContainer.Resolve<IUpdateService>().AddToUpdate(followToRotationController);
+
+            diContainer.Register(followToRotationController);
+        }
+
+        private static void CreatePlayerRotateController(DiContainer diContainer)
         {
             var playerRotateController = new PlayerRotateController()
             {
@@ -139,57 +118,136 @@ namespace Code.Views
             };
 
             playerRotateController.CalculatedRotationChanged +=
-                (_, rotation) => followToRotationController.TargetRotation = rotation;
-            
-            _updateService.AddToUpdate(playerRotateController);
+                (_, rotation) => diContainer.Resolve<FollowToRotationController>().TargetRotation = rotation;
 
-            return playerRotateController;
+            diContainer.Resolve<IUpdateService>().AddToUpdate(playerRotateController);
+
+            diContainer.Register(playerRotateController);
         }
 
-        private PlayerMoveController CreatePlayerMoveController(
-            Transform cachedTransform,
-            FollowToPositionController followToPositionController,
-            FollowToRotationController followToRotationController)
+        private static void CreateFollowToPositionController(DiContainer diContainer)
         {
-            var playerMoveController = new PlayerMoveController(cachedTransform)
+            var transform = diContainer.Resolve<Transform>();
+            
+            var followToPositionController = new FollowToPositionController(transform)
+            {
+                TargetPosition = transform.position,
+                Acceleration = diContainer.Resolve<PlayerData>().MoveAcceleration
+            };
+
+            diContainer.Resolve<IUpdateService>().AddToUpdate(followToPositionController);
+            
+            diContainer.Register(followToPositionController);
+        }
+
+        private static void CreatePlayerMoveController(DiContainer diContainer)
+        {
+            var playerData = diContainer.Resolve<PlayerData>();
+
+            var playerMoveController = new PlayerMoveController(diContainer.Resolve<Transform>())
             {
                 IsActive = true,
-                Speed = _moveSpeed
+                Speed = playerData.MoveSpeed
             };
+
+            var followToPositionController = diContainer.Resolve<FollowToPositionController>();
 
             playerMoveController.CalculatedPositionChanged +=
                 (_, position) => followToPositionController.TargetPosition = position;
 
-            playerMoveController.MoveImpulseMagnitudeChanged += (_, moveImpulseMagnitude) =>
-                followToRotationController.Acceleration = _rotationAcceleration * moveImpulseMagnitude;
-            
-            _updateService.AddToUpdate(playerMoveController);
+            var followToRotationController = diContainer.Resolve<FollowToRotationController>();
 
-            return playerMoveController;
+            playerMoveController.MoveImpulseMagnitudeChanged += (_, moveImpulseMagnitude) =>
+                followToRotationController.Acceleration = playerData.RotationAcceleration * moveImpulseMagnitude;
+
+            diContainer.Resolve<IUpdateService>().AddToUpdate(playerMoveController);
+
+            diContainer.Register(playerMoveController);
         }
 
-        private static FollowToPositionController CreateFollowToPositionController(
-            Transform cachedTransform,
-            Rigidbody rigidbody,
-            float acceleration)
+        private static void CreatePlayerSpurtController(DiContainer diContainer)
         {
-            FollowToPositionController followToPositionController = DiContainer.Instance
-                .Resolve<IFollowToPositionControllerFactory>()
-                .Create(cachedTransform, acceleration);
+            var cachedTransform = diContainer.Resolve<Transform>();
+            var playerData = diContainer.Resolve<PlayerData>();
 
-            followToPositionController.CalculatedPositionChanged +=
-                (_, position) => rigidbody.MovePosition(position);
+            var playerSpurtController = new PlayerSpurtController(cachedTransform)
+            {
+                Distance = playerData.SpurtDistance,
+                Speed = playerData.SpurtSpeed
+            };
 
-            return followToPositionController;
+            var playerMoveController = diContainer.Resolve<PlayerMoveController>();
+            var playerRotateController = diContainer.Resolve<PlayerRotateController>();
+
+            playerSpurtController.ActiveChanged += (_, isActive) =>
+            {
+                playerMoveController.IsActive = !isActive;
+                playerRotateController.IsActive = !isActive;
+
+                if (!isActive)
+                {
+                    diContainer.Resolve<PlayerStateController>().TryChangeStateToDisableSpurt();
+                }
+            };
+
+            var followToPositionController = diContainer.Resolve<FollowToPositionController>();
+
+            playerSpurtController.CalculatedPositionChanged += (_, position) =>
+            {
+                cachedTransform.position = position;
+                followToPositionController.TargetPosition = position;
+            };
+            
+            diContainer.Resolve<IUpdateService>().AddToUpdate(playerSpurtController);
+            
+            diContainer.Register(playerSpurtController);
+        }
+
+        private void CreatePlayerStateController(DiContainer diContainer)
+        {
+            var playerData = diContainer.Resolve<PlayerData>();
+
+            var playerStateController = new PlayerStateController
+            {
+                DisableCooldown = playerData.DisableCooldown,
+                SpurtCooldown = playerData.SpurtCooldown
+            };
+
+            var playerSpurtController = diContainer.Resolve<PlayerSpurtController>();
+
+            playerStateController.StateChanged += (_, state) =>
+            {
+                if (state == PlayerState.Spurt)
+                {
+                    playerSpurtController.Active();
+                }
+                
+                PlayerStateControllerOnStateChanged(state);
+            };
+
+            diContainer.Resolve<IUpdateService>().AddToUpdate(playerStateController);
+            
+            diContainer.Register(playerStateController);
         }
 
         [Command]
-        private void CmdChangeBodyMaterial(MaterialKey newValue) => _currentBodyMaterialKey = newValue;
-        
-        // ReSharper disable once UnusedParameter.Local
-        private void SyncBodyMaterial(MaterialKey oldValue, MaterialKey newValue)
+        private void PlayerStateControllerOnStateChanged(PlayerState playerState)
         {
-            _bodyMeshRenderer.material = _materialService.GetMaterial(newValue);
+            State = playerState;
+        }
+        
+        private void UpdateBodyMaterial(PlayerState oldValue, PlayerState newValue)
+        {
+            MaterialKey bodyMaterialKey = State switch
+            {
+                PlayerState.Default => MaterialKey.DefaultPlayer,
+                PlayerState.Disable => MaterialKey.DisablePlayer,
+                PlayerState.SpurtReady => MaterialKey.SpurtReadyPlayer,
+                PlayerState.Spurt => MaterialKey.SpurtPlayer,
+                _ => throw new ArgumentOutOfRangeException(nameof(State), State, null)
+            };
+
+            _bodyMeshRenderer.material = _diContainer.Resolve<IMaterialService>().GetMaterial(bodyMaterialKey);
         }
     }
 }

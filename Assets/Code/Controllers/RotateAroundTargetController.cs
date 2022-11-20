@@ -22,7 +22,7 @@ namespace Code.Controllers
 
         public RotateAroundTargetController(float verticalAngle = 0, float horizontalAngle = 0)
         {
-            _userInputService = DiContainer.Instance.Resolve<IUserInputService>();
+            _userInputService = DiContainerRoot.Instance.Resolve<IUserInputService>();
 
             VerticalAngle = verticalAngle;
             HorizontalAngle = horizontalAngle;

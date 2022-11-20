@@ -53,12 +53,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   _bodyMeshRenderer: {fileID: 6400702960129980629}
-  _moveSpeed: 20
-  _moveAcceleration: 20
-  _rotationAcceleration: 50
-  _spurtDistance: 10
-  _spurtSpeed: 100
-  _spurtCooldown: 3
+  _playerData: {fileID: 11400000, guid: fc17f0da2ae708542a95fd6fcb4e707b, type: 2}
 --- !u!114 &6855872360379193160
 MonoBehaviour:
   m_ObjectHideFlags: 0

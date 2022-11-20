@@ -11,7 +11,7 @@ namespace Code.Factories
 
         public SpawnPointViewFactory()
         {
-            _viewService = DiContainer.Instance.Resolve<IViewService>();
+            _viewService = DiContainerRoot.Instance.Resolve<IViewService>();
         }
 
         public SpawnPointView Create(float spawnRadius)

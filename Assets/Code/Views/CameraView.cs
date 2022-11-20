@@ -1,4 +1,5 @@
 using Code.Controllers;
+using Code.Data;
 using Code.Infrastructure;
 using Code.Services.Contracts;
 using UnityEngine;
@@ -8,112 +9,103 @@ namespace Code.Views
     [RequireComponent(typeof(Camera))]
     public class CameraView : MonoBehaviour
     {
-        [SerializeField] private float _upShift;
-        [SerializeField] private float _acceleration;
-        [SerializeField] private float _distanceToTarget;
-        [SerializeField] private float _verticalAngleAnchor;
-        [SerializeField] private float _verticalAngleRestrictions;
-        [SerializeField] private float _sensitivity;
+        [SerializeField] private CameraData _cameraData;
 
         public Transform Target
         {
-            get => _shiftTargetController.OriginTransform;
-            set => _shiftTargetController.OriginTransform = value;
+            get => _diContainer.Resolve<ShiftTargetController>().OriginTransform;
+            set => _diContainer.Resolve<ShiftTargetController>().OriginTransform = value;
         }
 
-        private ShiftTargetController _shiftTargetController;
+        private DiContainer _diContainer;
 
         private void Awake()
         {
-            CreateControllers(transform);
+            _diContainer = new DiContainer(DiContainerRoot.Instance);
+            _diContainer.Register(transform);
+            _diContainer.Register(_cameraData);
+
+            CreateControllers(_diContainer);
         }
 
-        private void CreateControllers(Transform cachedTransform)
+        private static void CreateControllers(DiContainer diContainer)
         {
-            var updateService = DiContainer.Instance.Resolve<IUpdateService>();
-
-            LookToTargetController lookToTargetController =
-                CreateLookToTargetController(cachedTransform, updateService);
-
-            FollowToPositionController followToPositionController =
-                CreateFollowToPositionController(cachedTransform, _acceleration);
-
-            RotateAroundTargetController rotateAroundTargetController =
-                CreateRotateAroundTargetController(followToPositionController, updateService);
-
-            _shiftTargetController = 
-                CreateShitTargetController(lookToTargetController, rotateAroundTargetController, updateService);
+            CreateLookToTargetController(diContainer);
+            CreateFollowToPositionController(diContainer);
+            CreateRotateAroundTargetController(diContainer);
+            CreateShitTargetController(diContainer);
         }
         
-        private static LookToTargetController CreateLookToTargetController(
-            Transform cachedTransform,
-            IUpdateService updateService)
+        private static void CreateLookToTargetController(DiContainer diContainer)
         {
-            var lookToTargetController = new LookToTargetController(cachedTransform);
+            var transform = diContainer.Resolve<Transform>();
 
-            lookToTargetController.CalculatedRotationChanged += (_, rotation) => cachedTransform.rotation = rotation;
+            var lookToTargetController = new LookToTargetController(transform);
+
+            lookToTargetController.CalculatedRotationChanged += (_, rotation) => transform.rotation = rotation;
             
-            updateService.AddToUpdate(lookToTargetController);
-
-            return lookToTargetController;
+            diContainer.Resolve<IUpdateService>().AddToUpdate(lookToTargetController);
+            
+            diContainer.Register(lookToTargetController);
         }
+        private static void CreateFollowToPositionController(DiContainer diDiContainer)
+        {
+            var transform = diDiContainer.Resolve<Transform>();
+            var cameraData = diDiContainer.Resolve<CameraData>();
 
-        private ShiftTargetController CreateShitTargetController(
-            LookToTargetController lookToTargetController,
-            RotateAroundTargetController rotateAroundTargetController,
-            IUpdateService updateService)
+            var followToPositionController = new FollowToPositionController(transform)
+            {
+                TargetPosition = transform.position,
+                Acceleration = cameraData.Acceleration
+            };
+
+            followToPositionController.CalculatedPositionChanged +=
+                (_, position) => transform.position = position;
+
+            diDiContainer.Resolve<IUpdateService>().AddToUpdate(followToPositionController);
+            
+            diDiContainer.Register(followToPositionController);
+        }
+        private static void CreateRotateAroundTargetController(DiContainer diContainer)
+        {
+            var cameraData = diContainer.Resolve<CameraData>();
+
+            var rotateAroundTargetController = new RotateAroundTargetController(cameraData.VerticalAngleAnchor)
+            {
+                DistanceToTarget = cameraData.DistanceToTarget,
+                Sensitivity = cameraData.Sensitivity,
+                VerticalAngleRestrictions = cameraData.VerticalAngleRestrictions * Mathf.Deg2Rad,
+                VerticalAngleAnchor = cameraData.VerticalAngleAnchor
+            };
+
+            var followToPositionController = diContainer.Resolve<FollowToPositionController>();
+
+            rotateAroundTargetController.CalculatedPositionChanged += (_, position) =>
+                followToPositionController.TargetPosition = position;
+            
+            diContainer.Resolve<IUpdateService>().AddToUpdate(rotateAroundTargetController);
+
+            diContainer.Register(rotateAroundTargetController);
+        }
+        private static void CreateShitTargetController(DiContainer diContainer)
         {
             var shiftTargetController = new ShiftTargetController
             {
-                ShiftPosition = new Vector3(0, _upShift)
+                ShiftPosition = new Vector3(0, diContainer.Resolve<CameraData>().UpShift)
             };
+
+            var lookToTargetController = diContainer.Resolve<LookToTargetController>();
+            var rotateAroundTargetController = diContainer.Resolve<RotateAroundTargetController>();
 
             shiftTargetController.CalculatedPositionChanged += (_, position) =>
             {
                 lookToTargetController.TargetPosition = position;
                 rotateAroundTargetController.TargetPosition = position;
             };
-            
-            updateService.AddToUpdate(shiftTargetController);
 
-            return shiftTargetController;
-        }
+            diContainer.Resolve<IUpdateService>().AddToUpdate(shiftTargetController);
 
-        private RotateAroundTargetController CreateRotateAroundTargetController(
-            FollowToPositionController followToPositionController,
-            IUpdateService updateService)
-        {
-            float verticalAngleAnchor = _verticalAngleAnchor * Mathf.Deg2Rad;
-
-            var rotateAroundTargetController = new RotateAroundTargetController(verticalAngleAnchor)
-            {
-                DistanceToTarget = _distanceToTarget,
-                Sensitivity = _sensitivity,
-                VerticalAngleRestrictions = _verticalAngleRestrictions * Mathf.Deg2Rad,
-                VerticalAngleAnchor = verticalAngleAnchor
-            };
-
-            rotateAroundTargetController.CalculatedPositionChanged += (_, position) =>
-                followToPositionController.TargetPosition = position;
-            
-            updateService.AddToUpdate(rotateAroundTargetController);
-
-            return rotateAroundTargetController;
-        }
-
-        private static FollowToPositionController CreateFollowToPositionController(
-            Transform cachedTransform,
-            float acceleration)
-        {
-            FollowToPositionController followToPositionController = 
-                DiContainer.Instance
-                    .Resolve<IFollowToPositionControllerFactory>()
-                    .Create(cachedTransform, acceleration);
-
-            followToPositionController.CalculatedPositionChanged +=
-                (_, position) => cachedTransform.position = position;
-
-            return followToPositionController;
+            diContainer.Register(shiftTargetController);
         }
     }
 }

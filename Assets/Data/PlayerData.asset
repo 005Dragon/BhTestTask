@@ -9,8 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 675a81c27c804e14848e2d1ff648b4ad, type: 3}
-  m_Name: ActivePlayerMaterialData 2
+  m_Script: {fileID: 11500000, guid: 26cfa07952e545718a8cbc266d10204a, type: 3}
+  m_Name: PlayerData
   m_EditorClassIdentifier: 
-  _materialKey: 1
-  _material: {fileID: 2100000, guid: d6104cb89137e6c4a956aedf7226d290, type: 2}
+  _disableCooldown: 3
+  _moveSpeed: 20
+  _moveAcceleration: 20
+  _rotationAcceleration: 50
+  _spurtDistance: 10
+  _spurtSpeed: 50
+  _spurtCooldown: 1.5

@@ -15,7 +15,7 @@ namespace Code.Controllers
 
         public PlayerRotateController()
         {
-            _cameraView = DiContainer.Instance.Resolve<CameraView>();
+            _cameraView = DiContainerRoot.Instance.Resolve<CameraView>();
         }
 
         public void Update(float deltaTime)

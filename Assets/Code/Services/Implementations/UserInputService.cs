@@ -13,7 +13,7 @@ namespace Code.Services.Implementations
 
         public UserInputService()
         {
-            DiContainer.Instance.Resolve<IUpdateService>().AddToUpdate(this);
+            DiContainerRoot.Instance.Resolve<IUpdateService>().AddToUpdate(this);
         }
 
         public void ChangeCursorLockState()

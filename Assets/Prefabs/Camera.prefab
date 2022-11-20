@@ -46,12 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36ee4da7a01c4758b00b8a7e98e19a7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _upShift: 4
-  _acceleration: 5
-  _distanceToTarget: 10
-  _verticalAngleAnchor: 90
-  _verticalAngleRestrictions: 20
-  _sensitivity: 6
+  _cameraData: {fileID: 11400000, guid: b9c57a73027cd6541b13be06f80e984e, type: 2}
 --- !u!20 &3098460886762210292
 Camera:
   m_ObjectHideFlags: 0

@@ -8,27 +8,13 @@ namespace Code.Controllers
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
         public event EventHandler<bool> ActiveChanged;
-        public event EventHandler<bool> ReadyChanged;
         
         public float Distance { get; set; }
         public float Speed { get; set; }
 
-        public float Cooldown
-        {
-            get => _cooldown;
-            set
-            {
-                _cooldown = value;
-                _currentCooldown = _cooldown;
-            }
-        }
-
         private readonly Transform _playerTransform;
 
-        private bool _isReady;
         private bool _isActive;
-        private float _cooldown;
-        private float _currentCooldown;
         private float _progress;
         private Vector3 _startPosition;
         private Vector3 _targetPosition;
@@ -40,44 +26,50 @@ namespace Code.Controllers
 
         public void Active()
         {
-            if (_isActive || !_isReady)
+            if (_isActive)
             {
                 return;
             }
             
             ResetProgress();
-            ResetCooldown();
             
             _startPosition = _playerTransform.position;
             _targetPosition = GetTargetPosition();
-            
+
             _isActive = true;
+            ActiveChanged?.Invoke(this, _isActive);
+        }
+
+        public void Stop()
+        {
+            if (!_isActive)
+            {
+                return;
+            }
+            
+            _isActive = false;
             ActiveChanged?.Invoke(this, _isActive);
         }
 
         public void Update(float deltaTime)
         {
             Debug.DrawLine(_startPosition, _targetPosition);
-            
-            if (_isActive)
-            {
-                UpdateProgress(deltaTime, out bool progressFinished);
-                
-                CalculatedPositionChanged?.Invoke(this, CalculatePlayerPosition());
 
-                if (progressFinished)
-                {
-                    _isActive = false;
-                    ActiveChanged?.Invoke(this, _isActive);
-                }
-            }
-            else
+            if (!_isActive)
             {
-                if (!_isReady)
-                {
-                    UpdateCooldown(deltaTime);
-                }
+                return;
             }
+            
+            UpdateProgress(deltaTime, out bool progressFinished);
+            CalculatedPositionChanged?.Invoke(this, CalculatePlayerPosition());
+
+            if (!progressFinished)
+            {
+                return;
+            }
+            
+            _isActive = false;
+            ActiveChanged?.Invoke(this, _isActive);
         }
 
         private Vector3 CalculatePlayerPosition() => Vector3.Lerp(_startPosition, _targetPosition, _progress);
@@ -92,22 +84,6 @@ namespace Code.Controllers
             {
                 _progress = 1.0f;
             }
-        }
-        private void UpdateCooldown(float deltaTime) 
-        {
-            _currentCooldown -= deltaTime;
-
-            if (_currentCooldown <= 0.0f)
-            {
-                _isReady = true;
-                ReadyChanged?.Invoke(this, _isReady);
-            }
-        }
-        private void ResetCooldown()
-        {
-            _isReady = false;
-            ReadyChanged?.Invoke(this, _isReady);
-            _currentCooldown = Cooldown;
         }
         private Vector3 GetTargetPosition() => _startPosition + _playerTransform.forward * Distance;
     }

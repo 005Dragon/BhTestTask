@@ -13,7 +13,7 @@ namespace Code.Controllers
 
         public GameStartController()
         {
-            _viewService = DiContainer.Instance.Resolve<IViewService>();
+            _viewService = DiContainerRoot.Instance.Resolve<IViewService>();
         }
 
         public void Start()

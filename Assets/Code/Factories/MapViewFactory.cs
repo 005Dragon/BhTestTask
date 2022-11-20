@@ -13,9 +13,9 @@ namespace Code.Factories
 
         public MapViewFactory()
         {
-            _viewService = DiContainer.Instance.Resolve<IViewService>();
-            _hurdleViewFactory = DiContainer.Instance.Resolve<IHurdleViewFactory>();
-            _spawnPointViewFactory = DiContainer.Instance.Resolve<ISpawnPointViewFactory>();
+            _viewService = DiContainerRoot.Instance.Resolve<IViewService>();
+            _hurdleViewFactory = DiContainerRoot.Instance.Resolve<IHurdleViewFactory>();
+            _spawnPointViewFactory = DiContainerRoot.Instance.Resolve<ISpawnPointViewFactory>();
         }
 
         public MapView Create()
