@@ -246,6 +246,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63448ac923de4dd3ad5e8b71c912bcb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gameData: {fileID: 11400000, guid: 012f8797b55f130438f23be39c1f5907, type: 2}
   _storages:
   - {fileID: 11400000, guid: 33c4e5503022403479dcb81334ece557, type: 2}
   _viewTemplates:
@@ -257,6 +258,7 @@ MonoBehaviour:
   - {fileID: 7442778351154201778, guid: 0eadf8907714452469643b02800acaf1, type: 3}
   - {fileID: 2086045138343218204, guid: 7af88109f3ca49c47a8ff84081534f75, type: 3}
   - {fileID: 1224611329238099128, guid: 6ae060fca051fbe4380c61ba00ba67d0, type: 3}
+  - {fileID: 6414461542174562810, guid: 469af20aca043354fa32ccf5cf1b3b95, type: 3}
 --- !u!4 &1721969729
 Transform:
   m_ObjectHideFlags: 0

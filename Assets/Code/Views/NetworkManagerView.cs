@@ -42,8 +42,9 @@ namespace Code.Views
         private void InitializePlayer()
         {
             _viewService.Create<CameraView>();
+            _viewService.Create<PlayerUiView>();
             _userInputService.ChangeCursorLockState();
-            
+
             ClientConnected?.Invoke(this, EventArgs.Empty);
         }
 

@@ -12,6 +12,7 @@ namespace Code
 {
     public class Bootstrap : MonoBehaviour
     {
+        [SerializeField] private GameData _gameData;
         [SerializeField] private List<ScriptableObject> _storages;
         [SerializeField] private List<GameObject> _viewTemplates;
 
@@ -19,6 +20,7 @@ namespace Code
         
         private void Awake()
         {
+            DiContainerRoot.Instance.Register(_gameData);
             DiContainerRoot.Instance.Register<IMaterialService>(
                 new MaterialService(_storages.OfType<MaterialStorage>().First())
             );

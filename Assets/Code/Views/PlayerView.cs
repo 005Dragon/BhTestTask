@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Code.Controllers;
 using Code.Data;
 using Code.Infrastructure;
@@ -6,7 +7,6 @@ using Code.Services.Contracts;
 using Mirror;
 using UnityEngine;
 
-// ReSharper disable UnusedParameter.Local
 namespace Code.Views
 {
     [RequireComponent(typeof(Rigidbody))]
@@ -18,9 +18,11 @@ namespace Code.Views
         [Header("Data")] 
         [SerializeField] private PlayerData _playerData;
 
+        public event EventHandler<int> EnemyDamaged;
+
         [field: SyncVar(hook = nameof(UpdateBodyMaterial))]
         public PlayerState State { get; private set; }
-
+        
         private DiContainer _diContainer;
 
         private void Awake()
@@ -39,8 +41,9 @@ namespace Code.Views
             {
                 return;
             }
-            
+
             CreateControllers(_diContainer);
+            InitializePlayerUi(_diContainer);
             InitializeCamera(_diContainer);
             InitializeApplyingDataFromControllers(_diContainer);
         }
@@ -51,6 +54,12 @@ namespace Code.Views
             {
                 _diContainer.Resolve<PlayerSpurtCollisionController>().CheckCollision(State, collision);
             }
+        }
+
+        private void InitializePlayerUi(DiContainer diContainer)
+        {
+            var playerUiView = diContainer.Resolve<PlayerUiView>();
+            playerUiView.Initialize(this);
         }
 
         private static void InitializeCamera(DiContainer diContainer)
@@ -86,11 +95,11 @@ namespace Code.Views
             CreatePlayerStateController(diContainer);
         }
 
-        private static void CreatePlayerSpurtCollisionController(DiContainer diContainer)
+        private void CreatePlayerSpurtCollisionController(DiContainer diContainer)
         {
             var playerSpurtCollisionController = new PlayerSpurtCollisionController();
 
-            playerSpurtCollisionController.Damaged +=
+            playerSpurtCollisionController.SelfDamaged +=
                 (_, _) => diContainer.Resolve<PlayerStateController>().TryChangeStateToDisable();
 
             playerSpurtCollisionController.Intersected += 
@@ -165,7 +174,7 @@ namespace Code.Views
             diContainer.Register(playerMoveController);
         }
 
-        private static void CreatePlayerSpurtController(DiContainer diContainer)
+        private void CreatePlayerSpurtController(DiContainer diContainer)
         {
             var cachedTransform = diContainer.Resolve<Transform>();
             var playerData = diContainer.Resolve<PlayerData>();
@@ -178,6 +187,7 @@ namespace Code.Views
 
             var playerMoveController = diContainer.Resolve<PlayerMoveController>();
             var playerRotateController = diContainer.Resolve<PlayerRotateController>();
+            var playerSpurtCollisionController = diContainer.Resolve<PlayerSpurtCollisionController>();
 
             playerSpurtController.ActiveChanged += (_, isActive) =>
             {
@@ -187,6 +197,12 @@ namespace Code.Views
                 if (!isActive)
                 {
                     diContainer.Resolve<PlayerStateController>().TryChangeStateToDisableSpurt();
+                    
+                    if (playerSpurtCollisionController.DamagedPlayers > 0)
+                    {
+                        EnemyDamaged?.Invoke(this, playerSpurtCollisionController.DamagedPlayers);
+                        playerSpurtCollisionController.ResetDamagedPlayers();
+                    }
                 }
             };
 
@@ -236,6 +252,7 @@ namespace Code.Views
             State = playerState;
         }
         
+        [SuppressMessage("ReSharper", "UnusedParameter.Local")]
         private void UpdateBodyMaterial(PlayerState oldValue, PlayerState newValue)
         {
             MaterialKey bodyMaterialKey = State switch
