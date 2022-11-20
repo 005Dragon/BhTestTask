@@ -21,6 +21,8 @@ namespace Code.Services.Implementations
             _updatableObjects.Remove(updatableObject);
         }
 
+        public void Clear() => _updatableObjects.Clear();
+
         private void FixedUpdate()
         {
             if (!Updating)

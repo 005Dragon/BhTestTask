@@ -8,5 +8,6 @@ namespace Code.Services.Contracts
         
         void AddToUpdate(IUpdatable updatableObject);
         void RemoveFromUpdate(IUpdatable updatableObject);
+        void Clear();
     }
 }

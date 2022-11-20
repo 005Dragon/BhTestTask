@@ -4,6 +4,7 @@ using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Code.Views;
 using Mirror;
+using UnityEngine;
 
 namespace Code.Controllers
 {
@@ -18,7 +19,16 @@ namespace Code.Controllers
 
         public void Start()
         {
-            CreateNetworkManager();
+            var networkManagerView = Object.FindObjectOfType<NetworkManagerView>();
+
+            if (networkManagerView != null)
+            {
+                DiContainerRoot.Instance.Register(networkManagerView);
+            }
+            else
+            {
+                CreateNetworkManager();
+            }
         }
 
         private void CreateNetworkManager()

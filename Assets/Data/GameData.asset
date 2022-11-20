@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: GameData
   m_EditorClassIdentifier: 
   _scoreToVictory: 3
+  _reloadSceneCooldown: 5

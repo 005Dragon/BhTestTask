@@ -6,7 +6,9 @@ namespace Code.Data
     public class GameData : ScriptableObject
     {
         [SerializeField] private int _scoreToVictory;
+        [SerializeField] private float _reloadSceneCooldown;
 
         public int ScoreToVictory => _scoreToVictory;
+        public float ReloadSceneCooldown => _reloadSceneCooldown;
     }
 }

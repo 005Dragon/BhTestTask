@@ -20,6 +20,7 @@ namespace Code
         
         private void Awake()
         {
+            DiContainerRoot.Instance.Clear();
             DiContainerRoot.Instance.Register(_gameData);
             DiContainerRoot.Instance.Register<IMaterialService>(
                 new MaterialService(_storages.OfType<MaterialStorage>().First())
