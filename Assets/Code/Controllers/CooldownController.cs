@@ -3,7 +3,7 @@ using Code.Infrastructure;
 
 namespace Code.Controllers
 {
-    public class CooldownController : IUpdatable
+    public class CooldownController : IFixedUpdatable
     {
         public event EventHandler CooldownExpired;
 
@@ -29,7 +29,7 @@ namespace Code.Controllers
             Start();
         }
         
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             if (!_cooldownExpired)
             {

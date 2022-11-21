@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class FollowToPositionController : IUpdatable
+    public class FollowToPositionController : IFixedUpdatable
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
 
@@ -18,7 +18,7 @@ namespace Code.Controllers
             _originTransform = originTransform;
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             CalculatedPositionChanged?.Invoke(this, CalculatePosition(deltaTime));
         }

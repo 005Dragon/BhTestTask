@@ -3,7 +3,7 @@ using Code.Infrastructure;
 
 namespace Code.Controllers
 {
-    public class PlayerStateController : IUpdatable
+    public class PlayerStateController : IFixedUpdatable
     {
         public event EventHandler<PlayerState> StateChanged;
 
@@ -75,10 +75,10 @@ namespace Code.Controllers
             return true;
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
-            _disableCooldownController.Update(deltaTime);
-            _spurtCooldownController.Update(deltaTime);
+            _disableCooldownController.FixedUpdate(deltaTime);
+            _spurtCooldownController.FixedUpdate(deltaTime);
         }
 
         private void DisableCooldownControllerOnCooldownExpired(object sender, EventArgs eventArgs)

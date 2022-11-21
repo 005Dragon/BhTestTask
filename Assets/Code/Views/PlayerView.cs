@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using Code.Controllers;
 using Code.Data;
 using Code.Infrastructure;
+using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Mirror;
 using UnityEngine;
@@ -34,6 +35,15 @@ namespace Code.Views
             _diContainer.Register(transform);
             _diContainer.Register(GetComponent<Rigidbody>());
             _diContainer.Register(_playerData);
+        }
+
+        [ClientRpc]
+        public void TakeDamage()
+        {
+            if (isOwned)
+            {
+                _diContainer.Resolve<PlayerStateController>().TryChangeStateToDisable();
+            }
         }
 
         public override void OnStartClient()
@@ -101,9 +111,6 @@ namespace Code.Views
         private void CreatePlayerSpurtCollisionController(DiContainer diContainer)
         {
             var playerSpurtCollisionController = new PlayerSpurtCollisionController();
-
-            playerSpurtCollisionController.SelfDamaged +=
-                (_, _) => diContainer.Resolve<PlayerStateController>().TryChangeStateToDisable();
 
             playerSpurtCollisionController.Intersected += 
                 (_, _) => diContainer.Resolve<PlayerSpurtController>().Stop();
@@ -200,10 +207,12 @@ namespace Code.Views
                 if (!isActive)
                 {
                     diContainer.Resolve<PlayerStateController>().TryChangeStateToDisableSpurt();
-                    
-                    if (playerSpurtCollisionController.DamagedPlayers > 0)
+                    uint[] damagedPlayerIds = playerSpurtCollisionController.GetDamagedPlayerIds();
+
+                    if (damagedPlayerIds.Length > 0)
                     {
-                        EnemyDamaged?.Invoke(this, playerSpurtCollisionController.DamagedPlayers);
+                        NetworkClient.Send(new PlayerDamageMessage { PlayerNetIds = damagedPlayerIds});
+                        EnemyDamaged?.Invoke(this, damagedPlayerIds.Length);
                         playerSpurtCollisionController.ResetDamagedPlayers();
                     }
                 }

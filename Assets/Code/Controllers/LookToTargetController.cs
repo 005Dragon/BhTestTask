@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class LookToTargetController : IUpdatable
+    public class LookToTargetController : IFixedUpdatable
     {
         public event EventHandler<Quaternion> CalculatedRotationChanged; 
 
@@ -17,7 +17,7 @@ namespace Code.Controllers
             _originTransform = originTransform;
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             CalculatedRotationChanged?.Invoke(this, CalculateRotation());
         }

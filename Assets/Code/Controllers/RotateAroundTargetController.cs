@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class RotateAroundTargetController : IUpdatable
+    public class RotateAroundTargetController : IFixedUpdatable
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
 
@@ -28,7 +28,7 @@ namespace Code.Controllers
             HorizontalAngle = horizontalAngle;
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             Vector2 userInputImpulse = GetUserInputImpulse(deltaTime);
 

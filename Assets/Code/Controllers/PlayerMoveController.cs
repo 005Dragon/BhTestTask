@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class PlayerMoveController : IUpdatable
+    public class PlayerMoveController : IFixedUpdatable
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
         public event EventHandler<float> MoveImpulseMagnitudeChanged; 
@@ -22,7 +22,7 @@ namespace Code.Controllers
             _userInputService = DiContainerRoot.Instance.Resolve<IUserInputService>();
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             if (!IsActive)
             {

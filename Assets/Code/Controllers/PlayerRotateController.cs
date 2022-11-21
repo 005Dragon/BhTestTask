@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class PlayerRotateController : IUpdatable
+    public class PlayerRotateController : IFixedUpdatable
     {
         public event EventHandler<Quaternion> CalculatedRotationChanged;
 
@@ -18,7 +18,7 @@ namespace Code.Controllers
             _cameraView = DiContainerRoot.Instance.Resolve<CameraView>();
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             if (!IsActive)
             {

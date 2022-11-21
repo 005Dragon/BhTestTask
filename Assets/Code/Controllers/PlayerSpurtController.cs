@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class PlayerSpurtController : IUpdatable
+    public class PlayerSpurtController : IFixedUpdatable
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
         public event EventHandler<bool> ActiveChanged;
@@ -51,7 +51,7 @@ namespace Code.Controllers
             ActiveChanged?.Invoke(this, _isActive);
         }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             Debug.DrawLine(_startPosition, _targetPosition);
 

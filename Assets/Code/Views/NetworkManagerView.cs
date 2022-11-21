@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Code.Controllers;
 using Code.Data;
 using Code.Infrastructure;
@@ -19,6 +21,19 @@ namespace Code.Views
 
             NetworkServer.RegisterHandler<WinnerPlayerMessage>(WinnerPlayerHandler);
             NetworkServer.RegisterHandler<ReloadGameMessage>(ReloadGameHandler);
+            NetworkServer.RegisterHandler<PlayerDamageMessage>(PlayerDamageHandler);
+        }
+
+        private void PlayerDamageHandler(NetworkConnectionToClient connection, PlayerDamageMessage message)
+        {
+            IEnumerable<PlayerView> damagedPlayers = FindObjectsOfType<NetworkIdentity>()
+                .Where(x => message.PlayerNetIds.Any(netId => x.netId == netId))
+                .Select(x => x.GetComponent<PlayerView>());
+
+            foreach (PlayerView playerView in damagedPlayers)
+            {
+                playerView.TakeDamage();
+            }
         }
 
         public override void OnClientConnect()
@@ -46,12 +61,12 @@ namespace Code.Views
             {
                 DiContainerRoot.Instance.Resolve<IViewService>().Create<CameraView>();
                 DiContainerRoot.Instance.Resolve<IViewService>().Create<PlayerUiView>();
-                
-                DiContainerRoot.Instance.Resolve<IUserInputService>().ChangeCursorLockState(CursorLockMode.Locked);
+
+                Cursor.lockState = CursorLockMode.Locked;
             }
             else
             {
-                DiContainerRoot.Instance.Resolve<IUserInputService>().ChangeCursorLockState(CursorLockMode.Confined);
+                Cursor.lockState = CursorLockMode.Confined;
             }
         }
 

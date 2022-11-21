@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace Code.Controllers
 {
-    public class ShiftTargetController : IUpdatable
+    public class ShiftTargetController : IFixedUpdatable
     {
         public event EventHandler<Vector3> CalculatedPositionChanged;
         public Vector3 ShiftPosition { get; set; }
         public Transform OriginTransform { get; set; }
 
-        public void Update(float deltaTime)
+        public void FixedUpdate(float deltaTime)
         {
             CalculatedPositionChanged?.Invoke(this, CalculatePosition());
         }

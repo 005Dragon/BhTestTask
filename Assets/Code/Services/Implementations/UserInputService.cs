@@ -11,21 +11,11 @@ namespace Code.Services.Implementations
         public Vector2 RotateImpulseInput { get; private set; }
         public Vector2 MoveInput { get; private set; }
 
+        private bool _changingLookState;
+
         public UserInputService()
         {
             DiContainerRoot.Instance.Resolve<IUpdateService>().AddToUpdate(this);
-        }
-
-        public void ChangeCursorLockState()
-        {
-            Cursor.lockState = Cursor.lockState == CursorLockMode.Locked
-                ? CursorLockMode.Confined
-                : CursorLockMode.Locked;
-        }
-        
-        public void ChangeCursorLockState(CursorLockMode cursorLockMode)
-        {
-            Cursor.lockState = cursorLockMode;
         }
 
         public void Update(float deltaTime)
@@ -42,10 +32,25 @@ namespace Code.Services.Implementations
             
             MoveInput = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")).normalized;
 
-            if (Input.GetKey(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
-                ChangeCursorLockState();
+                _changingLookState = true;
+                Debug.Log("Esc down");
             }
+
+            if (Input.GetKeyUp(KeyCode.Escape) && _changingLookState)
+            {
+                _changingLookState = false;
+                ChangeCursorLockState();
+                Debug.Log("Esc up");
+            }
+        }
+
+        private static void ChangeCursorLockState()
+        {
+            Cursor.lockState = Cursor.lockState == CursorLockMode.Locked
+                ? CursorLockMode.Confined
+                : CursorLockMode.Locked;
         }
     }
 }

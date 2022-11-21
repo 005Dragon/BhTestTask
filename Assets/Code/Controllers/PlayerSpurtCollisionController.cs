@@ -1,44 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Code.Views;
+using Mirror;
 using UnityEngine;
 
 namespace Code.Controllers
 {
     public class PlayerSpurtCollisionController
     {
-        public event EventHandler SelfDamaged;
         public event EventHandler Intersected;
 
-        public int DamagedPlayers => _damagedPlayers.Count;
+        private readonly HashSet<uint> _damagedPlayerNetIds = new();
 
-        private readonly HashSet<PlayerView> _damagedPlayers = new();
-
+        public uint[] GetDamagedPlayerIds() => _damagedPlayerNetIds.ToArray();
+        
         public void CheckCollision(PlayerState selfState, Collision collision)
         {
             if (selfState == PlayerState.Disable)
             {
                 return;
             }
-            
-            if (collision.gameObject.TryGetComponent(out PlayerView playerView))
-            {
-                if (playerView.State == PlayerState.Spurt)
-                {
-                    SelfDamaged?.Invoke(this, EventArgs.Empty);
-                }
 
-                if (selfState == PlayerState.Spurt && playerView.State != PlayerState.Disable)
-                {
-                    _damagedPlayers.Add(playerView);
-                }
-            }
-            else if (selfState == PlayerState.Spurt)
+            if (selfState == PlayerState.Spurt)
             {
-                Intersected?.Invoke(this, EventArgs.Empty);
+                if (collision.gameObject.TryGetComponent(out PlayerView playerView))
+                {
+                    if (playerView.State != PlayerState.Disable)
+                    {
+                        _damagedPlayerNetIds.Add(playerView.GetComponent<NetworkIdentity>().netId);
+                    }
+                }
+                else
+                {
+                    Intersected?.Invoke(this, EventArgs.Empty);
+                }
             }
         }
 
-        public void ResetDamagedPlayers() => _damagedPlayers.Clear();
+        public void ResetDamagedPlayers() => _damagedPlayerNetIds.Clear();
     }
 }
