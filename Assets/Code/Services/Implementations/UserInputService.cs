@@ -22,6 +22,11 @@ namespace Code.Services.Implementations
                 ? CursorLockMode.Confined
                 : CursorLockMode.Locked;
         }
+        
+        public void ChangeCursorLockState(CursorLockMode cursorLockMode)
+        {
+            Cursor.lockState = cursorLockMode;
+        }
 
         public void Update(float deltaTime)
         {

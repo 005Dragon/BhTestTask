@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Code.Controllers;
 using Code.Data;
 using Code.Factories;
 using Code.Infrastructure;
@@ -16,8 +15,6 @@ namespace Code
         [SerializeField] private List<ScriptableObject> _storages;
         [SerializeField] private List<GameObject> _viewTemplates;
 
-        private GameStartController _gameStartController;
-        
         private void Awake()
         {
             DiContainerRoot.Instance.Clear();
@@ -33,10 +30,6 @@ namespace Code
             DiContainerRoot.Instance.Register<IHurdleViewFactory>(new HurdleViewFactory());
             DiContainerRoot.Instance.Register<ISpawnPointViewFactory>(new SpawnPointViewFactory());
             DiContainerRoot.Instance.Register<IMapViewFactory>(new MapViewFactory());
-
-            _gameStartController = new GameStartController();
         }
-
-        private void Start() => _gameStartController.Start();
     }
 }

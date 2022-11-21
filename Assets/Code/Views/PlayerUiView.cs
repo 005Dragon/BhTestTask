@@ -1,8 +1,8 @@
 using Code.Data;
 using Code.Infrastructure;
 using Code.NetworkMessages;
-using Code.Services.Contracts;
 using Mirror;
+using TMPro;
 using UnityEngine;
 
 namespace Code.Views
@@ -10,6 +10,7 @@ namespace Code.Views
     public class PlayerUiView : MonoBehaviour
     {
         [Header("Inner references")] 
+        [SerializeField] private TextMeshProUGUI _playerNameTextMeshPro;
         [SerializeField] private PlayerScoreUiView _playerScore;
 
         private string _playerName;
@@ -18,6 +19,7 @@ namespace Code.Views
         {
             playerView.EnemyDamaged += PlayerViewOnEnemyDamaged;
             _playerName = playerView.name;
+            _playerNameTextMeshPro.text = _playerName;
         }
 
         private void PlayerViewOnEnemyDamaged(object sender, int countDamagedPlayers)

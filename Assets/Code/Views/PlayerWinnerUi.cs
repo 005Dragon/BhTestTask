@@ -1,6 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Code.Infrastructure;
-using Code.Services.Contracts;
 using Mirror;
 using TMPro;
 using UnityEngine;

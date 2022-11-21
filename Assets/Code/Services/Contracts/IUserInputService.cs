@@ -10,5 +10,6 @@ namespace Code.Services.Contracts
         Vector2 MoveInput { get; }
 
         void ChangeCursorLockState();
+        void ChangeCursorLockState(CursorLockMode cursorLockMode);
     }
 }

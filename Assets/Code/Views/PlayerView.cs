@@ -20,9 +20,12 @@ namespace Code.Views
 
         public event EventHandler<int> EnemyDamaged;
 
+        [field: SyncVar(hook = nameof(UpdatePlayerName))]
+        public string PlayerName { get; set; }
+
         [field: SyncVar(hook = nameof(UpdateBodyMaterial))]
         public PlayerState State { get; private set; }
-        
+
         private DiContainer _diContainer;
 
         private void Awake()
@@ -265,6 +268,12 @@ namespace Code.Views
             };
 
             _bodyMeshRenderer.material = _diContainer.Resolve<IMaterialService>().GetMaterial(bodyMaterialKey);
+        }
+
+        [SuppressMessage("ReSharper", "UnusedParameter.Local")]
+        private void UpdatePlayerName(string oldValue, string newValue)
+        {
+            name = newValue;
         }
     }
 }

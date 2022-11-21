@@ -57,7 +57,7 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0.1
-  _textTemplate: Player {0} winner!
+  _textTemplate: '{0} winner!'
   _textMeshPro: {fileID: 88041473169646933}
 --- !u!223 &7294643275006281893
 Canvas:

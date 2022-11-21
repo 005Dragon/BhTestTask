@@ -1,27 +1,24 @@
-using System;
 using Code.Controllers;
 using Code.Data;
 using Code.Infrastructure;
 using Code.NetworkMessages;
 using Code.Services.Contracts;
 using Mirror;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Code.Views
 {
-    public class NetworkManagerView : NetworkManager
+    public class NetworkManagerView : NetworkRoomManager
     {
-        public event EventHandler ClientConnected;
+        private readonly PlayerIdentityController _playerIdentityController = new();
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            
-            NetworkServer.RegisterHandler<CreatePlayerMessage>(CreatePlayerHandler);
+
             NetworkServer.RegisterHandler<WinnerPlayerMessage>(WinnerPlayerHandler);
             NetworkServer.RegisterHandler<ReloadGameMessage>(ReloadGameHandler);
-            
-            DiContainerRoot.Instance.Resolve<IMapViewFactory>().Create();
         }
 
         public override void OnClientConnect()
@@ -29,32 +26,64 @@ namespace Code.Views
             base.OnClientConnect();
             
             NetworkClient.RegisterHandler<ClearUpdatingMessage>(ClearUpdatingHandler);
-            
-            InitializePlayer();
-            
-            DiContainerRoot.Instance.Resolve<IUserInputService>().ChangeCursorLockState();
         }
 
         public override void OnServerSceneChanged(string sceneName)
         {
             base.OnServerSceneChanged(sceneName);
-            
-            DiContainerRoot.Instance.Resolve<IMapViewFactory>().Create();
+
+            if (IsSceneActive(GameplayScene))
+            {
+                DiContainerRoot.Instance.Resolve<IMapViewFactory>().Create();
+            }
         }
 
         public override void OnClientSceneChanged()
         {
             base.OnClientSceneChanged();
-            
-            InitializePlayer();
+
+            if (IsSceneActive(GameplayScene))
+            {
+                DiContainerRoot.Instance.Resolve<IViewService>().Create<CameraView>();
+                DiContainerRoot.Instance.Resolve<IViewService>().Create<PlayerUiView>();
+                
+                DiContainerRoot.Instance.Resolve<IUserInputService>().ChangeCursorLockState(CursorLockMode.Locked);
+            }
+            else
+            {
+                DiContainerRoot.Instance.Resolve<IUserInputService>().ChangeCursorLockState(CursorLockMode.Confined);
+            }
         }
 
-        private void InitializePlayer()
+        public override void OnServerAddPlayer(NetworkConnectionToClient connection)
         {
-            DiContainerRoot.Instance.Resolve<IViewService>().Create<CameraView>();
-            DiContainerRoot.Instance.Resolve<IViewService>().Create<PlayerUiView>();
+            if (IsSceneActive(GameplayScene))
+            {
+                GameObject playerGameObject = CreatePlayerGameObject(connection);
+                NetworkServer.AddPlayerForConnection(connection, playerGameObject);
+            }
+            else
+            {
+                base.OnServerAddPlayer(connection);    
+            }
+        }
 
-            ClientConnected?.Invoke(this, EventArgs.Empty);
+        public override GameObject OnRoomServerCreateGamePlayer(
+            NetworkConnectionToClient connection,
+            GameObject roomPlayer)
+        {
+            return CreatePlayerGameObject(connection);
+        }
+
+        private GameObject CreatePlayerGameObject(NetworkConnectionToClient connection)
+        {
+            var playerView = DiContainerRoot.Instance.Resolve<IViewService>().Create<PlayerView>(false);
+            SpawnPointView spawnPoint = DiContainerRoot.Instance.Resolve<MapView>().GetRandomSpawnPoint();
+
+            playerView.PlayerName = "Player" + _playerIdentityController.GetId(connection.connectionId);
+            playerView.transform.position = spawnPoint.transform.position;
+            
+            return playerView.gameObject;
         }
 
         private void CreateReloadSceneCooldownController()
@@ -83,15 +112,6 @@ namespace Code.Views
             CreateReloadSceneCooldownController();
         }
 
-        private static void CreatePlayerHandler(NetworkConnectionToClient connection, CreatePlayerMessage message)
-        {
-            SpawnPointView spawnPoint = DiContainerRoot.Instance.Resolve<MapView>().GetRandomSpawnPoint();
-            var playerView = DiContainerRoot.Instance.Resolve<IViewService>().Create<PlayerView>(false);
-            playerView.transform.position = spawnPoint.transform.position;
-            
-            NetworkServer.AddPlayerForConnection(connection, playerView.gameObject);
-        }
-
         private static void ClearUpdatingHandler(ClearUpdatingMessage message)
         {
             DiContainerRoot.Instance.Resolve<IUpdateService>().Clear();
@@ -104,7 +124,7 @@ namespace Code.Views
                 NetworkServer.Destroy(networkIdentity.gameObject);
             }
 
-            ServerChangeScene(SceneManager.GetActiveScene().name);
+            ServerChangeScene(SceneManager.GetActiveScene().path);
         }
     }
 }
