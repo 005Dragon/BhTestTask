@@ -74,7 +74,7 @@ namespace Code.Views
             {
                 DistanceToTarget = cameraData.DistanceToTarget,
                 Sensitivity = cameraData.Sensitivity,
-                VerticalAngleRestrictions = cameraData.VerticalAngleRestrictions * Mathf.Deg2Rad,
+                VerticalAngleRestrictions = cameraData.VerticalAngleRestrictions,
                 VerticalAngleAnchor = cameraData.VerticalAngleAnchor
             };
 
